@@ -10,14 +10,16 @@ ELMS = 65
 AURS = 250
 LOGW = 250
 FPS = 60
+# Elements order depends on file order in ELEMENTS path
+ANEMO, GEO, ELECTRO, DENDRO, HYDRO, PYRO, CRYO = 0, 1, 2, 3, 4, 5, 6
 ELEMENT_COLOR = {
-    'Anemo': (163, 243, 202),
-    'Geo': (250, 182, 50),
-    'Electro': (175, 142, 193),
-    'Dendro': (165, 200, 59),
-    'Hydro': (76, 194, 241),
-    'Pyro': (239, 121, 56),
-    'Cryo': (159, 214, 227)
+    ANEMO: (163, 243, 202),
+    GEO: (250, 182, 50),
+    ELECTRO: (175, 142, 193),
+    DENDRO: (165, 200, 59),
+    HYDRO: (76, 194, 241),
+    PYRO: (239, 121, 56),
+    CRYO: (159, 214, 227)
 }
 REACTION_COLOR = {
     'Vaporize': (254, 203, 99),
@@ -28,15 +30,19 @@ REACTION_COLOR = {
     'Swirl':  (163, 243, 202),
     'Electro-Charged': (212, 162, 255),
     'Burning': (233, 152, 8),
-    'Overgrown': (76, 194, 241),
-    'Intensified': (175, 142, 193)
+    'Bloom': (76, 194, 241),
+    'Quicken': (175, 142, 193)
 }
-ANEMO, GEO, ELECTRO, DENDRO, HYDRO, PYRO, CRYO = 0, 1, 2, 3, 4, 5, 6
 AURA_TAX = 0.8
 REACTION_MODIFIER = {
-    'equal': 1,
+    'normal': 1,
     'forward': 2,
-    'reverse': 0.5
+    'reverse': 0.5,
+    'Swirl': 0.5,
+    'Crystalize': 0.5
+}
+REACTION_CONSUMER = {
+    'EC': 0.4
 }
 
 
@@ -145,225 +151,147 @@ def reaction(mousex, mousey):
     if CNVH - ELMS < mousey < CNVH:
         for i in range(2):
             slot = - i - 1
-            x = ELMS * ANEMO
-            if x < mousex < x + ELMS:
-                anemoTrigger(slot)
-            x = ELMS * GEO
-            if x < mousex < x + ELMS:
-                geoTrigger(slot)
-            x = ELMS * CRYO
-            if x < mousex < x + ELMS:
+            if ELMS * ANEMO < mousex < ELMS * ANEMO + ELMS:
+                anemo_trigger(slot)
+            if ELMS * GEO < mousex < ELMS * GEO + ELMS:
+                geo_trigger(slot)
+            if ELMS * CRYO < mousex < ELMS * CRYO + ELMS:
                 cryoTrigger(slot)
-        x = ELMS * DENDRO
-        if x < mousex < x + ELMS:
-            dendroTrigger()
-        x = ELMS * PYRO
-        if x < mousex < x + ELMS:
+        if ELMS * DENDRO < mousex < ELMS * DENDRO + ELMS:
+            dendro_trigger()
+        if ELMS * PYRO < mousex < ELMS * PYRO + ELMS:
             pyroTrigger()
-        x = ELMS * ELECTRO
-        if x < mousex < x + ELMS:
-            electroTrigger()
-        x = ELMS * HYDRO
-        if x < mousex < x + ELMS:
-            hydroTrigger()
+        if ELMS * ELECTRO < mousex < ELMS * ELECTRO + ELMS:
+            electro_trigger()
+        if ELMS * HYDRO < mousex < ELMS * HYDRO + ELMS:
+            hydro_trigger()
 
 
-# All reactions
-# reaction modifiers
-reverseAmpModifier = 0.5
-forwardAmpModifier = 2
-superconductModifier = 1
-overloadModifier = 1
-swirlModifier = 0.5
-crystalizeModifier = 0.5
-electroChargedModifier = -0.4
-
-
-def anemoTrigger(slot):
-    # Swirl
-    if aura_list[slot].element == 2 or aura_list[slot].element == 4 or aura_list[slot].element == 5 or aura_list[slot].element == 6:
-        rxnMod(swirlModifier, slot)
+def anemo_trigger(slot):
+    if aura_list[slot].element in [ELECTRO, HYDRO, PYRO, CRYO]:
+        consume_gauge(REACTION_MODIFIER['Swirl'], slot)
         reaction_text_list.insert(0, ReactionText('Swirl'))
 
 
-def geoTrigger(slot):
-    # Crystalize
-    if aura_list[slot].element == 2 or aura_list[slot].element == 4 or aura_list[slot].element == 5 or aura_list[slot].element == 6:
-        rxnMod(crystalizeModifier, slot)
+def geo_trigger(slot):
+    if aura_list[slot].element in [ELECTRO, HYDRO, PYRO, CRYO]:
+        consume_gauge(REACTION_MODIFIER['Crystalize'], slot)
         reaction_text_list.insert(0, ReactionText('Crystalize'))
 
 
-def electroTrigger():
-    global EC, frameEC
-    for i in range(2):
-        slot = -(i + 1)
-        # Overload
-        if aura_list[slot].element == 5:
-            rxnMod(overloadModifier, slot)
-            reaction_text_list.insert(0, ReactionText('Overload'))
-
-        # Superconduct
-        if aura_list[slot].element == 6:
-            rxnMod(superconductModifier, slot)
-            reaction_text_list.insert(0, ReactionText('Superconduct'))
-
-        # Intensified
-        if aura_list[slot].element == 3:
-            reaction_text_list.insert(0, ReactionText('Intensified'))
-
-    # Electro-charged
-    if aura_list[-1].element == 4:
-        doubleAura(aura_list[-1], 2)
-        reaction_text_list.insert(0, ReactionText('Electro-Charged'))
-        aura_list[-1].U -= 0.4
-        aura_list[-2].U -= 0.4
-        frameEC = 0
-        EC = True
-
-        # Electro-charged
-    elif aura_list[-2].element == 4:
-        doubleAura(aura_list[-2], 2)
-        reaction_text_list.insert(0, ReactionText('Electro-Charged'))
-        aura_list[-1].U -= 0.4
-        aura_list[-2].U -= 0.4
-        frameEC = 0
-        EC = True
-
-
-def dendroTrigger():
-    global burning, frameBurning
-    # Burning
-    if aura_list[-1].element == 5:
-        doubleAura(aura_list[-1], 3)
-        reaction_text_list.insert(0, ReactionText('Burning'))
-        frameBurning = 0
-        burning = True
-    # Burning
-    elif aura_list[-2].element == 5:
-        doubleAura(aura_list[-2], 3)
-        reaction_text_list.insert(0, ReactionText('Burning'))
-        frameBurning = 0
-        burning = True
-
-    for i in range(2):
-        slot = -(i + 1)
-
-        # Overgrown
-        if aura_list[slot].element == 4:
-            reaction_text_list.insert(0, ReactionText('Overgrown'))
-
-        # Intensified
-        if aura_list[slot].element == 2:
-            reaction_text_list.insert(0, ReactionText('Intensified'))
-
-
-def hydroTrigger():
-    global EC, frameEC
-    for i in range(2):
-        slot = -(i + 1)
-        # forward vaporize
-        if aura_list[slot].element == 5:
-            rxnMod(forwardAmpModifier, slot)
-            reaction_text_list.insert(0, ReactionText('Vaporize'))
-
-        # Overgrown
-        if aura_list[slot].element == 3:
-            reaction_text_list.insert(0, ReactionText('Overgrown'))
-
-    # Electro-charged
-    if aura_list[-1].element == 2:
-        doubleAura(aura_list[-1], 4)
-        reaction_text_list.insert(0, ReactionText('Electro-Charged'))
-        aura_list[-1].U -= 0.4
-        aura_list[-2].U -= 0.4
-        frameEC = 0
-        EC = True
-
-        # Electro-charged
-    elif aura_list[-2].element == 2:
-        doubleAura(aura_list[-2], 4)
-        reaction_text_list.insert(0, ReactionText('Electro-Charged'))
-        aura_list[-1].U -= 0.4
-        aura_list[-2].U -= 0.4
-        frameEC = 0
-        EC = True
-
-
-def pyroTrigger():
-    for i in range(2):
-        slot = -(i + 1)
-        # forward melt
-        if aura_list[slot].element == 6:
-            rxnMod(forwardAmpModifier, slot)
-            reaction_text_list.insert(0, ReactionText('Melt'))
-
-        # reverse vaporize
-        if aura_list[slot].element == 4:
-            rxnMod(reverseAmpModifier, slot)
-            reaction_text_list.insert(0, ReactionText('Vaporize'))
-
-        # Overload
-        if aura_list[slot].element == 2:
-            rxnMod(overloadModifier, slot)
-            reaction_text_list.insert(0, ReactionText('Overload'))
-
-    global burning, frameBurning
-    # Burning
-    if aura_list[-1].element == 3:
-        doubleAura(aura_list[-1], 5)
-        reaction_text_list.insert(0, ReactionText('Burning'))
-        frameBurning = 0
-        burning = True
-    # Burning
-    elif aura_list[-2].element == 3:
-        doubleAura(aura_list[-2], 5)
-        reaction_text_list.insert(0, ReactionText('Burning'))
-        frameBurning = 0
-        burning = True
-
-    # Burning
-    if aura_list[slot].element == 3:
-        pass
-
-
 def cryoTrigger(slot):
-    # Superconduct
-    if aura_list[slot].element == 2:
-        rxnMod(superconductModifier, slot)
+    if aura_list[slot].element == ELECTRO:
+        consume_gauge(REACTION_MODIFIER['normal'], slot)
         reaction_text_list.insert(0, ReactionText('Superconduct'))
-
-    # Reverse melt
-    if aura_list[slot].element == 5:
-        rxnMod(reverseAmpModifier, slot)
+    if aura_list[slot].element == PYRO:
+        consume_gauge(REACTION_MODIFIER['reverse'], slot)
         reaction_text_list.insert(0, ReactionText('Melt'))
 
 
-def rxnMod(mod, auraSlot):
+def electro_trigger():
+    global EC, frameEC
+    for i in [-1, -2]:
+        if aura_list[i].element == PYRO:
+            consume_gauge(REACTION_MODIFIER['normal'], i)
+            reaction_text_list.insert(0, ReactionText('Overload'))
+            break
+        if aura_list[i].element == CRYO:
+            consume_gauge(REACTION_MODIFIER['normal'], i)
+            reaction_text_list.insert(0, ReactionText('Superconduct'))
+            break
+        if aura_list[i].element == DENDRO:
+            reaction_text_list.insert(0, ReactionText('Intensified'))
+            break
+        if aura_list[i].element == HYDRO:
+            double_aura(aura_list[i], ELECTRO)
+            reaction_text_list.insert(0, ReactionText('Electro-Charged'))
+            aura_list[-1].U -= REACTION_CONSUMER['EC']
+            aura_list[-2].U -= REACTION_CONSUMER['EC']
+            frameEC = 0
+            EC = True
+            break
+
+
+def dendro_trigger():
+    global burning, frame_burning
+    for i in [-1, -2]:
+        if aura_list[i].element == PYRO:
+            double_aura(aura_list[i], DENDRO)
+            reaction_text_list.insert(0, ReactionText('Burning'))
+            frame_burning = 0
+            burning = True
+            break
+        if aura_list[i].element == HYDRO:
+            reaction_text_list.insert(0, ReactionText('Bloom'))
+            break
+        if aura_list[i].element == ELECTRO:
+            reaction_text_list.insert(0, ReactionText('Quicken'))
+            break
+
+
+def hydro_trigger():
+    global EC, frameEC
+    for i in [-1, -2]:
+        if aura_list[i].element == PYRO:
+            consume_gauge(REACTION_MODIFIER['forward'], i)
+            reaction_text_list.insert(0, ReactionText('Vaporize'))
+            break
+        if aura_list[i].element == DENDRO:
+            reaction_text_list.insert(0, ReactionText('Bloom'))
+            break
+        if aura_list[i].element == ELECTRO:
+            double_aura(aura_list[i], HYDRO)
+            reaction_text_list.insert(0, ReactionText('Electro-Charged'))
+            aura_list[-1].U -= REACTION_CONSUMER['EC']
+            aura_list[-2].U -= REACTION_CONSUMER['EC']
+            frameEC = 0
+            EC = True
+            break
+
+
+def pyroTrigger():
+    global burning, frame_burning
+    for i in [-1, -2]:
+        if aura_list[i].element == CRYO:
+            consume_gauge(REACTION_MODIFIER['forward'], i)
+            reaction_text_list.insert(0, ReactionText('Melt'))
+            break
+        if aura_list[i].element == HYDRO:
+            consume_gauge(REACTION_MODIFIER['reverse'], i)
+            reaction_text_list.insert(0, ReactionText('Vaporize'))
+            break
+        if aura_list[i].element == ELECTRO:
+            consume_gauge(REACTION_MODIFIER['normal'], i)
+            reaction_text_list.insert(0, ReactionText('Overload'))
+            break
+        if aura_list[i].element == DENDRO:
+            double_aura(aura_list[i], PYRO)
+            reaction_text_list.insert(0, ReactionText('Burning'))
+            frame_burning = 0
+            burning = True
+            break
+
+
+def consume_gauge(modifier, auraSlot):
     if A1:
-        aura_list[auraSlot].U -= 1 * mod
+        aura_list[auraSlot].U -= 1 * modifier
     elif B2:
-        aura_list[auraSlot].U -= 2 * mod
+        aura_list[auraSlot].U -= 2 * modifier
     elif C4:
-        aura_list[auraSlot].U -= 4 * mod
+        aura_list[auraSlot].U -= 4 * modifier
 
 
 def getDecayRate():
     if A1:
-        U = 1
-        d = 'A'
-    elif B2:
-        U = 2
-        d = 'B'
-    elif C4:
-        U = 4
-        d = 'C'
-
-    return U, d
+        return 1, 'A'
+    if B2:
+        return 2, 'B'
+    return 4, 'C'
 
 # sets up double auras for the electro-charged and burning reactions
 
 
-def doubleAura(aura1, aura2):
+def double_aura(aura1, aura2):
     if aura1.element == 4 and aura2 == 2:  # electro on hydro
         U, d = getDecayRate()
         if aura1.auraCount == 1:
@@ -398,8 +326,8 @@ def e_charged():  # electro charged ticks
     if EC:
         if frameEC == (5 * round(FPSDisplay.trueFPS / 5)) and len(aura_list) >= 2:
             frameEC = 0
-            aura_list[-1].U -= 0.4
-            aura_list[-2].U -= 0.4
+            aura_list[-1].U -= REACTION_CONSUMER['EC']
+            aura_list[-2].U -= REACTION_CONSUMER['EC']
             reaction_text_list.insert(0, ReactionText('Electro-Charged'))
 
         if aura_list[-1].U <= 0 or aura_list[-2].U <= 0:
@@ -408,10 +336,10 @@ def e_charged():  # electro charged ticks
 
 
 def burningReaction():  # burning ticks
-    global frameBurning, burning
+    global frame_burning, burning
     if burning:
-        if frameBurning == (FPS / 4) and len(aura_list) >= 2:
-            frameBurning = 0
+        if frame_burning == (FPS / 4) and len(aura_list) >= 2:
+            frame_burning = 0
             reaction_text_list.insert(0, ReactionText('Burning'))
 
             # reapply 2B pyro every tick (-1,2 top, -2,1 bottom)
@@ -424,7 +352,7 @@ def burningReaction():  # burning ticks
 
         if aura_list[-1].U <= 0 or aura_list[-2].U <= 0:
             burning = False
-            frameBurning = (FPS / 4) + 1
+            frame_burning = (FPS / 4) + 1
 
 
 # (0 anemo, 1 geo, 2 electro, 3 dendro, 4 hydro, 5 pyro, 6 cryo)
@@ -561,7 +489,7 @@ def reactionLog():  # reaction log
 # Game loop
 running = True
 frameEC = 0
-frameBurning = 0
+frame_burning = 0
 EC = False
 burning = False
 
@@ -580,7 +508,7 @@ fps = FPSDisplay()
 
 while running:
     frameEC += 1
-    frameBurning += 1
+    frame_burning += 1
     # BG color keep at top
     canvas.fill((0, 0, 0))
 
