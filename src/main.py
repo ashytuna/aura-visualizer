@@ -6,7 +6,8 @@ import pygame
 
 CNVW, CNVH = 800, 600
 CAPTION = 'Aura Visualizer'
-ELMW, ELMH, ELMS = 65, 65, 300
+ELMW, ELMH, ELMS = 65, 65, 250
+LOGW = 250
 FPS = 60
 ELEMENT_COLOR = {
     'Anemo': (163, 243, 202),
@@ -67,11 +68,11 @@ pygame.display.set_icon(favicon)
 def aura_display_size(auraCount):
     if auraCount == 1:
         if len(aura_list) == 2:  # 1 aura - middle
-            return ((CNVW / 2) - (ELMS / 2) - 100, (CNVH / 2.8) - (ELMS / 2) - 30)
+            return ((CNVW - LOGW - ELMS) / 2, CNVH / 2.8 - ELMS / 2 - 30)
         if len(aura_list) == 3:  # 2 auras, 1st - left
-            return ((CNVW / 2) - ELMS - 100, (CNVH / 2.8) - (ELMS / 2) - 30)
+            return ((CNVW - LOGW) / 2 - ELMS, CNVH / 2.8 - ELMS / 2 - 30)
     if auraCount == 2:  # 2 auras, 2nd - right
-        return (CNVW / 2 - 100, (CNVH / 2.8) - (ELMS / 2) - 30)
+        return ((CNVW - LOGW) / 2, CNVH / 2.8 - ELMS / 2 - 30)
     return (-1, -1)
 
 
@@ -530,11 +531,11 @@ def draw():
                 x * (CNVW / 40) - 2, CNVH - (100 * i), 1, 20))
 
     # Units buttons
-    font1A = pygame.font.Font(path.FONT_JAJP, 25)
+    font1A = pygame.font.Font(path.FONT_JAJP, 30)
     font1A.set_underline(A1)
-    font2B = pygame.font.Font(path.FONT_JAJP, 25)
+    font2B = pygame.font.Font(path.FONT_JAJP, 30)
     font2B.set_underline(B2)
-    font4C = pygame.font.Font(path.FONT_JAJP, 25)
+    font4C = pygame.font.Font(path.FONT_JAJP, 30)
     font4C.set_underline(C4)
     img = font1A.render("1A", True, (255, 255, 255))
     canvas.blit(img, (CNVW - 300, CNVH - 50))
@@ -549,10 +550,11 @@ def draw():
 def reactionLog():  # reaction log
     if len(reaction_text_list) > 0:
         for i in range(len(reaction_text_list)):
-            font = pygame.font.SysFont('dejavusansmono', 23)
+            font = pygame.font.Font(path.FONT_JAJP, 25)
             font = font.render(
                 reaction_text_list[i].text, True, reaction_text_list[i].color)
-            canvas.blit(font, (CNVW - 200, (CNVH - 250) - (30 * i) + 15))
+            canvas.blit(font, (CNVW - LOGW,
+                               (CNVH - LOGW) - (30 * i) + 15))
 
 
 # Game loop
