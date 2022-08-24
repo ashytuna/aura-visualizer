@@ -4,9 +4,10 @@ import path
 import pygame
 
 
-CNVW, CNVH = 800, 600
 CAPTION = 'Aura Visualizer'
-ELMW, ELMH, ELMS = 65, 65, 250
+CNVW, CNVH = 800, 600
+ELMS = 65
+AURS = 250
 LOGW = 250
 FPS = 60
 ELEMENT_COLOR = {
@@ -34,8 +35,8 @@ ANEMO, GEO, ELECTRO, DENDRO, HYDRO, PYRO, CRYO = 0, 1, 2, 3, 4, 5, 6
 AURA_TAX = 0.8
 REACTION_MODIFIER = {
     'equal': 1,
-    'reverse': 0.5,
-    'forward': 2
+    'forward': 2,
+    'reverse': 0.5
 }
 
 
@@ -68,11 +69,11 @@ pygame.display.set_icon(favicon)
 def aura_display_size(auraCount):
     if auraCount == 1:
         if len(aura_list) == 2:  # 1 aura - middle
-            return ((CNVW - LOGW - ELMS) / 2, CNVH / 2.8 - ELMS / 2 - 30)
+            return ((CNVW - LOGW - AURS) / 2, CNVH / 2.8 - AURS / 2 - 30)
         if len(aura_list) == 3:  # 2 auras, 1st - left
-            return ((CNVW - LOGW) / 2 - ELMS, CNVH / 2.8 - ELMS / 2 - 30)
+            return ((CNVW - LOGW) / 2 - AURS, CNVH / 2.8 - AURS / 2 - 30)
     if auraCount == 2:  # 2 auras, 2nd - right
-        return ((CNVW - LOGW) / 2, CNVH / 2.8 - ELMS / 2 - 30)
+        return ((CNVW - LOGW) / 2, CNVH / 2.8 - AURS / 2 - 30)
     return (-1, -1)
 
 
@@ -97,7 +98,7 @@ class Aura:
     def aura_display(self):
         if self.aura:
             img = pygame.transform.scale(
-                elmImgs[self.element], (ELMS, ELMS))
+                elmImgs[self.element], (AURS, AURS))
             canvas.blit(img, aura_display_size(self.auraCount))
 
     def decay(self):
@@ -141,29 +142,29 @@ class Aura:
 
 
 def reaction(mousex, mousey):
-    if CNVH - ELMH < mousey < CNVH:
+    if CNVH - ELMS < mousey < CNVH:
         for i in range(2):
             slot = - i - 1
-            x = ELMW * ANEMO
-            if x < mousex < x + ELMW:
+            x = ELMS * ANEMO
+            if x < mousex < x + ELMS:
                 anemoTrigger(slot)
-            x = ELMW * GEO
-            if x < mousex < x + ELMW:
+            x = ELMS * GEO
+            if x < mousex < x + ELMS:
                 geoTrigger(slot)
-            x = ELMW * CRYO
-            if x < mousex < x + ELMW:
+            x = ELMS * CRYO
+            if x < mousex < x + ELMS:
                 cryoTrigger(slot)
-        x = ELMW * DENDRO
-        if x < mousex < x + ELMW:
+        x = ELMS * DENDRO
+        if x < mousex < x + ELMS:
             dendroTrigger()
-        x = ELMW * PYRO
-        if x < mousex < x + ELMW:
+        x = ELMS * PYRO
+        if x < mousex < x + ELMS:
             pyroTrigger()
-        x = ELMW * ELECTRO
-        if x < mousex < x + ELMW:
+        x = ELMS * ELECTRO
+        if x < mousex < x + ELMS:
             electroTrigger()
-        x = ELMW * HYDRO
-        if x < mousex < x + ELMW:
+        x = ELMS * HYDRO
+        if x < mousex < x + ELMS:
             hydroTrigger()
 
 
@@ -508,7 +509,7 @@ def draw():
     # element buttons
     for i in range(len(elmImgs)):
         canvas.blit(pygame.transform.scale(
-            elmImgs[i], (ELMW, ELMH)), (ELMW * i, CNVH - ELMH))
+            elmImgs[i], (ELMS, ELMS)), (ELMS * i, CNVH - ELMS))
 
     # Update Aura
     for i in range(len(aura_list)):
