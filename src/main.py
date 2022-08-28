@@ -10,7 +10,7 @@ ELMS = 65
 AURS = 250
 LOGW = 250
 FPS = 60
-# Elements order depends on file order in ELEMENTS path
+# Elements order depends on files order in ELEMENTS path
 ANEMO, GEO, ELECTRO, DENDRO, HYDRO, PYRO, CRYO = 0, 1, 2, 3, 4, 5, 6
 ELEMENT_COLOR = {
     ANEMO: (163, 243, 202),
@@ -134,7 +134,8 @@ class Aura:
                 0, CNVH - (100 * self.auraCount), self.U * (CNVW / 4), 30))
             font = pygame.font.Font(path.FONT_JAJP, 25)
             img = font.render(
-                str(math.ceil(self.U * 100) / 100) + self.decayU, True, (255, 255, 255))
+                str(math.ceil(self.U * 100) / 100) + self.decayU, True,
+                (255, 255, 255))
             canvas.blit(img, (10, CNVH - (100 * self.auraCount) - 40))
 
     def dendro_decay_while_burning(self):
@@ -194,14 +195,11 @@ def electro_trigger():
         if aura_list[i].element == PYRO:
             consume_gauge(REACTION_MODIFIER['normal'], i)
             reaction_text_list.insert(0, ReactionText('Overload'))
-            break
         if aura_list[i].element == CRYO:
             consume_gauge(REACTION_MODIFIER['normal'], i)
             reaction_text_list.insert(0, ReactionText('Superconduct'))
-            break
         if aura_list[i].element == DENDRO:
             reaction_text_list.insert(0, ReactionText('Intensified'))
-            break
         if aura_list[i].element == HYDRO:
             double_aura(aura_list[i], ELECTRO)
             reaction_text_list.insert(0, ReactionText('Electro-Charged'))
@@ -220,13 +218,10 @@ def dendro_trigger():
             reaction_text_list.insert(0, ReactionText('Burning'))
             frame_burning = 0
             burning = True
-            break
         if aura_list[i].element == HYDRO:
             reaction_text_list.insert(0, ReactionText('Bloom'))
-            break
         if aura_list[i].element == ELECTRO:
             reaction_text_list.insert(0, ReactionText('Quicken'))
-            break
 
 
 def hydro_trigger():
@@ -235,10 +230,8 @@ def hydro_trigger():
         if aura_list[i].element == PYRO:
             consume_gauge(REACTION_MODIFIER['forward'], i)
             reaction_text_list.insert(0, ReactionText('Vaporize'))
-            break
         if aura_list[i].element == DENDRO:
             reaction_text_list.insert(0, ReactionText('Bloom'))
-            break
         if aura_list[i].element == ELECTRO:
             double_aura(aura_list[i], HYDRO)
             reaction_text_list.insert(0, ReactionText('Electro-Charged'))
@@ -255,21 +248,17 @@ def pyroTrigger():
         if aura_list[i].element == CRYO:
             consume_gauge(REACTION_MODIFIER['forward'], i)
             reaction_text_list.insert(0, ReactionText('Melt'))
-            break
         if aura_list[i].element == HYDRO:
             consume_gauge(REACTION_MODIFIER['reverse'], i)
             reaction_text_list.insert(0, ReactionText('Vaporize'))
-            break
         if aura_list[i].element == ELECTRO:
             consume_gauge(REACTION_MODIFIER['normal'], i)
             reaction_text_list.insert(0, ReactionText('Overload'))
-            break
         if aura_list[i].element == DENDRO:
             double_aura(aura_list[i], PYRO)
             reaction_text_list.insert(0, ReactionText('Burning'))
             frame_burning = 0
             burning = True
-            break
 
 
 def consume_gauge(modifier, auraSlot):
@@ -288,68 +277,46 @@ def getDecayRate():
         return 2, 'B'
     return 4, 'C'
 
-# sets up double auras for the electro-charged and burning reactions
-
 
 def double_aura(aura1, aura2):
-    if aura1.element == 4 and aura2 == 2:  # electro on hydro
+    if aura1.element == HYDRO and aura2 == ELECTRO \
+            or aura1.element == ELECTRO and aura2 == HYDRO:
         U, d = getDecayRate()
-        if aura1.auraCount == 1:
-            aura_list.append(Aura(True, U, d, aura2, 2))
-        elif aura1.auraCount == 2:
-            aura_list.append(Aura(True, U, d, aura2, 1))
-
-    elif aura1.element == 2 and aura2 == 4:  # hydro on electro
+        if aura1.auraCount in [1, 2]:
+            aura_list.append(Aura(True, U, d, aura2, 3 - aura1.auraCount))
+    elif aura1.element == PYRO and aura2 == DENDRO \
+            or aura1.element == DENDRO and aura2 == PYRO:
         U, d = getDecayRate()
-        if aura1.auraCount == 1:
-            aura_list.append(Aura(True, U, d, aura2, 2))
-        elif aura1.auraCount == 2:
-            aura_list.append(Aura(True, U, d, aura2, 1))
-
-    elif aura1.element == 5 and aura2 == 3:  # dendro on pyro
-        U, d = getDecayRate()
-        if aura1.auraCount == 1:
-            aura_list.append(Aura(True, U, d, aura2, 2))
-        elif aura1.auraCount == 2:
-            aura_list.append(Aura(True, U, d, aura2, 1))
-
-    elif aura1.element == 3 and aura2 == 5:  # pyro on dendro
-        U, d = getDecayRate()
-        if aura1.auraCount == 1:
-            aura_list.append(Aura(True, U, d, aura2, 2))
-        elif aura1.auraCount == 2:
-            aura_list.append(Aura(True, U, d, aura2, 1))
+        if aura1.auraCount in [1, 2]:
+            aura_list.append(Aura(True, U, d, aura2, 3 - aura1.auraCount))
 
 
-def e_charged():  # electro charged ticks
+def EC_tick():
     global frameEC, EC
     if EC:
-        if frameEC == (5 * round(FPSDisplay.trueFPS / 5)) and len(aura_list) >= 2:
+        if frameEC == 5 * round(FPSDisplay.trueFPS / 5) and len(aura_list) >= 2:
             frameEC = 0
             aura_list[-1].U -= REACTION_CONSUMER['EC']
             aura_list[-2].U -= REACTION_CONSUMER['EC']
             reaction_text_list.insert(0, ReactionText('Electro-Charged'))
-
         if aura_list[-1].U <= 0 or aura_list[-2].U <= 0:
             EC = False
             frameEC = (5 * round(FPSDisplay.trueFPS / 5)) + 1
 
 
-def burningReaction():  # burning ticks
+def burning_tick():
     global frame_burning, burning
     if burning:
-        if frame_burning == (FPS / 4) and len(aura_list) >= 2:
+        if frame_burning == FPS / 4 and len(aura_list) >= 2:
             frame_burning = 0
             reaction_text_list.insert(0, ReactionText('Burning'))
-
-            # reapply 2B pyro every tick (-1,2 top, -2,1 bottom)
-            if aura_list[-2].element == 3:
-                if aura_list[-1].U <= 2 * AURA_TAX and aura_list[-1].element == 5:
-                    aura_list[-1] = Aura(True, 2, 'B', 5, 2)
-            elif aura_list[-1].element == 3:
-                if aura_list[-2].U <= 2 * AURA_TAX and aura_list[-2].element == 5:
-                    aura_list[-2] = Aura(True, 2, 'B', 5, 1)
-
+            # reapply Pyro every tick
+            for i in [-1, -2]:
+                if aura_list[-3 - i] == DENDRO \
+                        and aura_list[i].U <= 2 * AURA_TAX \
+                        and aura_list[i].element == PYRO:
+                    aura_list[i] = Aura(True, 2, 'B', PYRO, 3 + i)
+                    break
         if aura_list[-1].U <= 0 or aura_list[-2].U <= 0:
             burning = False
             frame_burning = (FPS / 4) + 1
@@ -517,8 +484,8 @@ while running:
     for aura in aura_list:
         aura.dendro_decay_while_burning()
 
-    e_charged()
-    burningReaction()
+    EC_tick()
+    burning_tick()
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
     for event in pygame.event.get():
