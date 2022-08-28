@@ -60,9 +60,9 @@ reaction_text_list = []
 
 elementC = [(163, 243, 202), (250, 182, 50), (175, 142, 193),
             (165, 200, 59), (76, 194, 241), (239, 121, 56), (159, 214, 227)]
-elmImgs = []
+element_imgs = []
 for fileName in os.listdir(path.ELEMENTS):
-    elmImgs.append(pygame.image.load(path.ELEMENTS + fileName))
+    element_imgs.append(pygame.image.load(path.ELEMENTS + fileName))
 
 
 pygame.init()
@@ -72,13 +72,13 @@ favicon = pygame.image.load(path.FAVICON)
 pygame.display.set_icon(favicon)
 
 
-def aura_display_size(auraCount):
-    if auraCount == 1:
+def aura_display_size(aura_count):
+    if aura_count == 1:
         if len(aura_list) == 2:  # 1 aura - middle
             return ((CNVW - LOGW - AURS) / 2, CNVH / 2.8 - AURS / 2 - 30)
         if len(aura_list) == 3:  # 2 auras, 1st - left
             return ((CNVW - LOGW) / 2 - AURS, CNVH / 2.8 - AURS / 2 - 30)
-    if auraCount == 2:  # 2 auras, 2nd - right
+    if aura_count == 2:  # 2 auras, 2nd - right
         return ((CNVW - LOGW) / 2, CNVH / 2.8 - AURS / 2 - 30)
     return (-1, -1)
 
@@ -91,7 +91,7 @@ class ReactionText:
 
 
 class Aura:
-    def __init__(self, aura, U, decayU, element, auraCount):
+    def __init__(self, aura, U, decayU, element, aura_count):
         if element == ANEMO or element == GEO:
             self.aura = False
         else:
@@ -99,13 +99,13 @@ class Aura:
         self.U = U * AURA_TAX
         self.decayU = decayU
         self.element = element
-        self.auraCount = auraCount
+        self.aura_count = aura_count
 
     def aura_display(self):
         if self.aura:
             img = pygame.transform.scale(
-                elmImgs[self.element], (AURS, AURS))
-            canvas.blit(img, aura_display_size(self.auraCount))
+                element_imgs[self.element], (AURS, AURS))
+            canvas.blit(img, aura_display_size(self.aura_count))
 
     def decay(self):
         if self.aura:
@@ -131,12 +131,12 @@ class Aura:
     def gauge_display(self):
         if self.aura:
             pygame.draw.rect(canvas, (elementC[self.element]), pygame.Rect(
-                0, CNVH - (100 * self.auraCount), self.U * (CNVW / 4), 30))
+                0, CNVH - (100 * self.aura_count), self.U * (CNVW / 4), 30))
             font = pygame.font.Font(path.FONT_JAJP, 25)
             img = font.render(
                 str(math.ceil(self.U * 100) / 100) + self.decayU, True,
                 (255, 255, 255))
-            canvas.blit(img, (10, CNVH - (100 * self.auraCount) - 40))
+            canvas.blit(img, (10, CNVH - (100 * self.aura_count) - 40))
 
     def dendro_decay_while_burning(self):
         if self.element == DENDRO and burning:
@@ -282,13 +282,13 @@ def double_aura(aura1, aura2):
     if aura1.element == HYDRO and aura2 == ELECTRO \
             or aura1.element == ELECTRO and aura2 == HYDRO:
         U, d = getDecayRate()
-        if aura1.auraCount in [1, 2]:
-            aura_list.append(Aura(True, U, d, aura2, 3 - aura1.auraCount))
+        if aura1.aura_count in [1, 2]:
+            aura_list.append(Aura(True, U, d, aura2, 3 - aura1.aura_count))
     elif aura1.element == PYRO and aura2 == DENDRO \
             or aura1.element == DENDRO and aura2 == PYRO:
         U, d = getDecayRate()
-        if aura1.auraCount in [1, 2]:
-            aura_list.append(Aura(True, U, d, aura2, 3 - aura1.auraCount))
+        if aura1.aura_count in [1, 2]:
+            aura_list.append(Aura(True, U, d, aura2, 3 - aura1.aura_count))
 
 
 def EC_tick():
@@ -322,7 +322,6 @@ def burning_tick():
             frame_burning = (FPS / 4) + 1
 
 
-# (0 anemo, 1 geo, 2 electro, 3 dendro, 4 hydro, 5 pyro, 6 cryo)
 # initial
 aura_list.append(Aura(False, 1, 'A', 7, 3))
 
@@ -333,78 +332,60 @@ def clickUnit():
     y = CNVH - 50
     w = 45
     h = 40
-    if mouse_x > x and mouse_x < x + w:
-        if mouse_y > y and mouse_y < y + h:
-            A1 = True
-            B2 = False
-            C4 = False
+    if x < mouse_x < x + w:
+        if y < mouse_y < y + h:
+            A1, B2, C4 = True, False, False
     x = CNVW - 200
-    if mouse_x > x and mouse_x < x + w:
-        if mouse_y > y and mouse_y < y + h:
-            A1 = False
-            B2 = True
-            C4 = False
+    if x < mouse_x < x + w:
+        if y < mouse_y < y + h:
+            A1, B2, C4 = False, True, False
     x = CNVW - 100
-    if mouse_x > x and mouse_x < x + w:
-        if mouse_y > y and mouse_y < y + h:
-            A1 = False
-            B2 = False
-            C4 = True
+    if x < mouse_x < x + w:
+        if y < mouse_y < y + h:
+            A1, B2, C4 = False, False, True
 
 
 def click(mouse_x, mouse_y):
     global A1, B2, C4
     clickUnit()
 
-    # Click aura
-    for elementber in range(len(elmImgs)):
-        w, h = 65, 65
-        x = w * elementber
-        y = CNVH - h
-        if mouse_x > x and mouse_x < x + w:
-            if mouse_y > y and mouse_y < y + h:
+    for element in range(len(element_imgs)):
+        if ELMS * element < mouse_x < ELMS * (element + 1):
+            if CNVH - ELMS < mouse_y < CNVH:
                 # if no aura, then apply an element
                 if aura_list[-1].aura == False:
                     if A1:
-                        aura_list.append(Aura(True, 1, 'A', elementber, 1))
+                        aura_list.append(Aura(True, 1, 'A', element, 1))
                     elif B2:
-                        aura_list.append(Aura(True, 2, 'B', elementber, 1))
+                        aura_list.append(Aura(True, 2, 'B', element, 1))
                     elif C4:
-                        aura_list.append(Aura(True, 4, 'C', elementber, 1))
-
-                # extending an aura with same element on slot 1
-                elif (aura_list[-1].element == elementber and aura_list[-1].aura == True):
-                    if A1 and aura_list[-1].U < 0.8:
-                        aura_list[-1] = Aura(True, 1, aura_list[-1].decayU,
-                                             elementber, aura_list[-1].auraCount)
-                    elif B2 and aura_list[-1].U < 2.6:
-                        aura_list[-1] = Aura(True, 2, aura_list[-1].decayU,
-                                             elementber, aura_list[-1].auraCount)
-                    elif C4 and aura_list[-1].U < 3.2:
-                        aura_list[-1] = Aura(True, 4, aura_list[-1].decayU,
-                                             elementber, aura_list[-1].auraCount)
-
-                # extending an aura with same element on slot 2
-                elif aura_list[-2].element == elementber and aura_list[-2].aura == True:
-                    if A1 and aura_list[-2].U < 0.8:
-                        aura_list[-2] = Aura(True, 1, aura_list[-2].decayU,
-                                             elementber, aura_list[-2].auraCount)
-                    elif B2 and aura_list[-2].U < 2.6:
-                        aura_list[-2] = Aura(True, 2, aura_list[-2].decayU,
-                                             elementber, aura_list[-2].auraCount)
-                    elif C4 and aura_list[-2].U < 3.2:
-                        aura_list[-2] = Aura(True, 4, aura_list[-2].decayU,
-                                             elementber, aura_list[-2].auraCount)
+                        aura_list.append(Aura(True, 4, 'C', element, 1))
+                # extending an aura with same element
                 else:
-                    # reactions
-                    reaction(mouse_x, mouse_y)
+                    no_reaction = False
+                    for i in [-1, -2]:
+                        if aura_list[i].element == element and aura_list[i].aura == True:
+                            if A1 and aura_list[i].U < 0.8:
+                                aura_list[i] = Aura(True, 1, aura_list[i].decayU,
+                                                    element, aura_list[i].aura_count)
+                            elif B2 and aura_list[i].U < 2.6:
+                                aura_list[i] = Aura(True, 2, aura_list[i].decayU,
+                                                    element, aura_list[i].aura_count)
+                            elif C4 and aura_list[i].U < 3.2:
+                                aura_list[i] = Aura(True, 4, aura_list[i].decayU,
+                                                    element, aura_list[i].aura_count)
+                            no_reaction = True
+                            break
+                    # reaction
+                    if no_reaction is False:
+                        reaction(mouse_x, mouse_y)
 
 
 def draw():
     # element buttons
-    for i in range(len(elmImgs)):
+    for i in range(len(element_imgs)):
         canvas.blit(pygame.transform.scale(
-            elmImgs[i], (ELMS, ELMS)), (ELMS * i, CNVH - ELMS))
+            element_imgs[i], (ELMS, ELMS)), (ELMS * i, CNVH - ELMS))
 
     # Update Aura
     for i in range(len(aura_list)):
@@ -497,7 +478,7 @@ while running:
 
     # Remove inactive auras from list
     newAuraList = [aura_list[i] for i in range(
-        len(aura_list)) if aura_list[i].aura or aura_list[i].auraCount == 3]
+        len(aura_list)) if aura_list[i].aura or aura_list[i].aura_count == 3]
     aura_list = newAuraList
 
     # Remove old reaction logs
