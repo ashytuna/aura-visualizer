@@ -348,7 +348,6 @@ def clickUnit():
 def click(mouse_x, mouse_y):
     global A1, B2, C4
     clickUnit()
-
     for element in range(len(element_imgs)):
         if ELMS * element < mouse_x < ELMS * (element + 1):
             if CNVH - ELMS < mouse_y < CNVH:
@@ -360,7 +359,7 @@ def click(mouse_x, mouse_y):
                         aura_list.append(Aura(True, 2, 'B', element, 1))
                     elif C4:
                         aura_list.append(Aura(True, 4, 'C', element, 1))
-                # extending an aura with same element
+                # extending an aura with same element, or occur reaction
                 else:
                     no_reaction = False
                     for i in [-1, -2]:
