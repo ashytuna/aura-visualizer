@@ -3,7 +3,6 @@ import os
 import path
 import pygame
 
-
 CAPTION = 'Aura Visualizer'
 CNVW, CNVH = 800, 600
 ELMS = 65
@@ -11,7 +10,7 @@ AURS = 250
 LOGW = 250
 FPS = 60
 # Elements order depends on files order in ELEMENTS path
-ANEMO, GEO, ELECTRO, DENDRO, HYDRO, PYRO, CRYO = 0, 1, 2, 3, 4, 5, 6
+ANEMO, CRYO, DENDRO, ELECTRO, GEO, HYDRO, PYRO = 0, 1, 2, 3, 4, 5, 6
 ELEMENT_COLOR = {
     ANEMO: (163, 243, 202),
     GEO: (250, 182, 50),
@@ -26,8 +25,8 @@ REACTION_COLOR = {
     'Overload': (251, 136, 155),
     'Superconduct': (196, 187, 245),
     'Melt': (255, 202, 105),
-    'Crystalize':  (215, 184, 130),
-    'Swirl':  (163, 243, 202),
+    'Crystalize': (215, 184, 130),
+    'Swirl': (163, 243, 202),
     'Electro-Charged': (212, 162, 255),
     'Burning': (233, 152, 8),
     'Bloom': (76, 194, 241),
@@ -57,13 +56,9 @@ C4 = False
 aura_list = []
 reaction_text_list = []
 
-
-elementC = [(163, 243, 202), (250, 182, 50), (175, 142, 193),
-            (165, 200, 59), (76, 194, 241), (239, 121, 56), (159, 214, 227)]
 element_imgs = []
 for fileName in os.listdir(path.ELEMENTS):
     element_imgs.append(pygame.image.load(path.ELEMENTS + fileName))
-
 
 pygame.init()
 canvas = pygame.display.set_mode((CNVW, CNVH))
@@ -75,29 +70,29 @@ pygame.display.set_icon(favicon)
 def aura_display_size(aura_count):
     if aura_count == 1:
         if len(aura_list) == 2:  # 1 aura - middle
-            return ((CNVW - LOGW - AURS) / 2, CNVH / 2.8 - AURS / 2 - 30)
+            return (CNVW - LOGW - AURS) / 2, CNVH / 2.8 - AURS / 2 - 30
         if len(aura_list) == 3:  # 2 auras, 1st - left
-            return ((CNVW - LOGW) / 2 - AURS, CNVH / 2.8 - AURS / 2 - 30)
+            return (CNVW - LOGW) / 2 - AURS, CNVH / 2.8 - AURS / 2 - 30
     if aura_count == 2:  # 2 auras, 2nd - right
-        return ((CNVW - LOGW) / 2, CNVH / 2.8 - AURS / 2 - 30)
-    return (-1, -1)
+        return (CNVW - LOGW) / 2, CNVH / 2.8 - AURS / 2 - 30
+    return -1, -1
 
 
 class ReactionText:
-    def __init__(self, reaction):
-        self.text = reaction
-        self.color = REACTION_COLOR[reaction] if reaction in REACTION_COLOR \
+    def __init__(self, _reaction):
+        self.text = _reaction
+        self.color = REACTION_COLOR[_reaction] if _reaction in REACTION_COLOR \
             else (255, 255, 255)
 
 
 class Aura:
-    def __init__(self, aura, U, decayU, element, aura_count):
+    def __init__(self, _aura, U, decay_U, element, aura_count):
         if element == ANEMO or element == GEO:
             self.aura = False
         else:
-            self.aura = aura
+            self.aura = _aura
         self.U = U * AURA_TAX
-        self.decayU = decayU
+        self.decay_U = decay_U
         self.element = element
         self.aura_count = aura_count
 
@@ -109,43 +104,43 @@ class Aura:
 
     def decay(self):
         if self.aura:
-            if self.decayU == 'A':
+            if self.decay_U == 'A':
                 self.U -= 1 / (decay_rate(1) * FPSDisplay.trueFPS)
-            if self.decayU == 'B':
+            if self.decay_U == 'B':
                 self.U -= 1 / (decay_rate(2) * FPSDisplay.trueFPS)
-            if self.decayU == 'C':
+            if self.decay_U == 'C':
                 self.U -= 1 / (decay_rate(4) * FPSDisplay.trueFPS)
-            if self.decayU == 'AB':
+            if self.decay_U == 'AB':
                 self.U -= (1 / (decay_rate(1) * FPSDisplay.trueFPS)) + \
-                    (1 / (decay_rate(2) * FPSDisplay.trueFPS))
-            if self.decayU == 'BB':
+                          (1 / (decay_rate(2) * FPSDisplay.trueFPS))
+            if self.decay_U == 'BB':
                 self.U -= (1 / (decay_rate(2) * FPSDisplay.trueFPS)) + \
-                    (1 / (decay_rate(2) * FPSDisplay.trueFPS))
-            if self.decayU == 'CB':
+                          (1 / (decay_rate(2) * FPSDisplay.trueFPS))
+            if self.decay_U == 'CB':
                 self.U -= (1 / (decay_rate(4) * FPSDisplay.trueFPS)) + \
-                    (1 / (decay_rate(2) * FPSDisplay.trueFPS))
+                          (1 / (decay_rate(2) * FPSDisplay.trueFPS))
         if self.U <= 0:
             self.U = 0
             self.aura = False
 
     def gauge_display(self):
         if self.aura:
-            pygame.draw.rect(canvas, (elementC[self.element]), pygame.Rect(
+            pygame.draw.rect(canvas, (ELEMENT_COLOR[self.element]), pygame.Rect(
                 0, CNVH - (100 * self.aura_count), self.U * (CNVW / 4), 30))
             font = pygame.font.Font(path.FONT_JAJP, 25)
             img = font.render(
-                str(math.ceil(self.U * 100) / 100) + self.decayU, True,
+                str(math.ceil(self.U * 100) / 100) + self.decay_U, True,
                 (255, 255, 255))
             canvas.blit(img, (10, CNVH - (100 * self.aura_count) - 40))
 
     def dendro_decay_while_burning(self):
         if self.element == DENDRO and burning:
-            if self.decayU == 'A':
-                self.decayU = 'AB'
-            if self.decayU == 'B':
-                self.decayU = 'BB'
-            if self.decayU == 'C':
-                self.decayU = 'CB'
+            if self.decay_U == 'A':
+                self.decay_U = 'AB'
+            if self.decay_U == 'B':
+                self.decay_U = 'BB'
+            if self.decay_U == 'C':
+                self.decay_U = 'CB'
 
 
 def reaction(mousex, mousey):
@@ -157,11 +152,11 @@ def reaction(mousex, mousey):
             if ELMS * GEO < mousex < ELMS * GEO + ELMS:
                 geo_trigger(slot)
             if ELMS * CRYO < mousex < ELMS * CRYO + ELMS:
-                cryoTrigger(slot)
+                cryo_trigger(slot)
         if ELMS * DENDRO < mousex < ELMS * DENDRO + ELMS:
             dendro_trigger()
         if ELMS * PYRO < mousex < ELMS * PYRO + ELMS:
-            pyroTrigger()
+            pyro_trigger()
         if ELMS * ELECTRO < mousex < ELMS * ELECTRO + ELMS:
             electro_trigger()
         if ELMS * HYDRO < mousex < ELMS * HYDRO + ELMS:
@@ -180,7 +175,7 @@ def geo_trigger(slot):
         reaction_text_list.insert(0, ReactionText('Crystalize'))
 
 
-def cryoTrigger(slot):
+def cryo_trigger(slot):
     if aura_list[slot].element == ELECTRO:
         consume_gauge(REACTION_MODIFIER['normal'], slot)
         reaction_text_list.insert(0, ReactionText('Superconduct'))
@@ -242,7 +237,7 @@ def hydro_trigger():
             break
 
 
-def pyroTrigger():
+def pyro_trigger():
     global burning, frame_burning
     for i in [-1, -2]:
         if aura_list[i].element == CRYO:
@@ -261,16 +256,16 @@ def pyroTrigger():
             burning = True
 
 
-def consume_gauge(modifier, auraSlot):
+def consume_gauge(modifier, aura_slot):
     if A1:
-        aura_list[auraSlot].U -= 1 * modifier
+        aura_list[aura_slot].U -= 1 * modifier
     elif B2:
-        aura_list[auraSlot].U -= 2 * modifier
+        aura_list[aura_slot].U -= 2 * modifier
     elif C4:
-        aura_list[auraSlot].U -= 4 * modifier
+        aura_list[aura_slot].U -= 4 * modifier
 
 
-def getDecayRate():
+def get_decay_rate():
     if A1:
         return 1, 'A'
     if B2:
@@ -281,12 +276,12 @@ def getDecayRate():
 def double_aura(aura1, aura2):
     if aura1.element == HYDRO and aura2 == ELECTRO \
             or aura1.element == ELECTRO and aura2 == HYDRO:
-        U, d = getDecayRate()
+        U, d = get_decay_rate()
         if aura1.aura_count in [1, 2]:
             aura_list.append(Aura(True, U, d, aura2, 3 - aura1.aura_count))
     elif aura1.element == PYRO and aura2 == DENDRO \
             or aura1.element == DENDRO and aura2 == PYRO:
-        U, d = getDecayRate()
+        U, d = get_decay_rate()
         if aura1.aura_count in [1, 2]:
             aura_list.append(Aura(True, U, d, aura2, 3 - aura1.aura_count))
 
@@ -326,7 +321,7 @@ def burning_tick():
 aura_list.append(Aura(False, 1, 'A', 7, 3))
 
 
-def clickUnit():
+def click_unit():
     global A1, B2, C4
     x = CNVW - 300
     y = CNVH - 50
@@ -345,14 +340,14 @@ def clickUnit():
             A1, B2, C4 = False, False, True
 
 
-def click(mouse_x, mouse_y):
+def click(_mouse_x, _mouse_y):
     global A1, B2, C4
-    clickUnit()
+    click_unit()
     for element in range(len(element_imgs)):
-        if ELMS * element < mouse_x < ELMS * (element + 1):
-            if CNVH - ELMS < mouse_y < CNVH:
+        if ELMS * element < _mouse_x < ELMS * (element + 1):
+            if CNVH - ELMS < _mouse_y < CNVH:
                 # if no aura, then apply an element
-                if aura_list[-1].aura == False:
+                if not aura_list[-1].aura:
                     if A1:
                         aura_list.append(Aura(True, 1, 'A', element, 1))
                     elif B2:
@@ -363,21 +358,28 @@ def click(mouse_x, mouse_y):
                 else:
                     no_reaction = False
                     for i in [-1, -2]:
-                        if aura_list[i].element == element and aura_list[i].aura == True:
+                        if element == aura_list[i].element and aura_list[i].aura is True:
                             if A1 and aura_list[i].U < 0.8:
-                                aura_list[i] = Aura(True, 1, aura_list[i].decayU,
-                                                    element, aura_list[i].aura_count)
+                                aura_list[i] = Aura(True, 1, aura_list[i].decay_U, element, aura_list[i].aura_count)
                             elif B2 and aura_list[i].U < 2.6:
-                                aura_list[i] = Aura(True, 2, aura_list[i].decayU,
-                                                    element, aura_list[i].aura_count)
+                                aura_list[i] = Aura(True, 2, aura_list[i].decay_U, element, aura_list[i].aura_count)
                             elif C4 and aura_list[i].U < 3.2:
-                                aura_list[i] = Aura(True, 4, aura_list[i].decayU,
-                                                    element, aura_list[i].aura_count)
+                                aura_list[i] = Aura(True, 4, aura_list[i].decay_U, element, aura_list[i].aura_count)
                             no_reaction = True
                             break
                     # reaction
                     if no_reaction is False:
-                        reaction(mouse_x, mouse_y)
+                        reaction(_mouse_x, _mouse_y)
+
+
+def reaction_log():
+    if len(reaction_text_list) > 0:
+        for i in range(len(reaction_text_list)):
+            font = pygame.font.Font(path.FONT_JAJP, 25)
+            font = font.render(
+                reaction_text_list[i].text, True, reaction_text_list[i].color)
+            canvas.blit(font, (CNVW - LOGW,
+                               (CNVH - LOGW) - 30 * i + 15))
 
 
 def draw():
@@ -385,14 +387,12 @@ def draw():
     for i in range(len(element_imgs)):
         canvas.blit(pygame.transform.scale(
             element_imgs[i], (ELMS, ELMS)), (ELMS * i, CNVH - ELMS))
-
-    # Update Aura
+    # Update aura
     for i in range(len(aura_list)):
         if aura_list[i].aura:
             aura_list[i].aura_display()
             aura_list[i].decay()
             aura_list[i].gauge_display()
-
     # Unit value tics
     for i in range(2):
         i += 1
@@ -405,7 +405,6 @@ def draw():
         for x in range(40):
             pygame.draw.rect(canvas, (0, 0, 0), pygame.Rect(
                 x * (CNVW / 40) - 2, CNVH - (100 * i), 1, 20))
-
     # Units buttons
     font1A = pygame.font.Font(path.FONT_JAJP, 30)
     font1A.set_underline(A1)
@@ -419,18 +418,7 @@ def draw():
     canvas.blit(img, (CNVW - 200, CNVH - 50))
     img = font4C.render("4C", True, (255, 255, 255))
     canvas.blit(img, (CNVW - 100, CNVH - 50))
-
-    reactionLog()
-
-
-def reactionLog():  # reaction log
-    if len(reaction_text_list) > 0:
-        for i in range(len(reaction_text_list)):
-            font = pygame.font.Font(path.FONT_JAJP, 25)
-            font = font.render(
-                reaction_text_list[i].text, True, reaction_text_list[i].color)
-            canvas.blit(font, (CNVW - LOGW,
-                               (CNVH - LOGW) - (30 * i) + 15))
+    reaction_log()
 
 
 # Game loop
@@ -456,9 +444,8 @@ fps = FPSDisplay()
 while running:
     frameEC += 1
     frame_burning += 1
-    # BG color keep at top
-    canvas.fill((0, 0, 0))
 
+    canvas.fill((0, 0, 0))
     draw()
 
     for aura in aura_list:
@@ -471,19 +458,15 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
         if event.type == pygame.MOUSEBUTTONDOWN:
             click(mouse_x, mouse_y)
 
     # Remove inactive auras from list
-    newAuraList = [aura_list[i] for i in range(
+    aura_list = [aura_list[i] for i in range(
         len(aura_list)) if aura_list[i].aura or aura_list[i].aura_count == 3]
-    aura_list = newAuraList
-
     # Remove old reaction logs
-    newReactionTextList = [reaction_text_list[i]
-                           for i in range(len(reaction_text_list)) if i <= 12]
-    reaction_text_list = newReactionTextList
+    reaction_text_list = [reaction_text_list[i]
+                          for i in range(len(reaction_text_list)) if i <= 12]
 
     # Update display
     fps.render()
