@@ -46,8 +46,9 @@ REACTION_CONSUMER = {
 
 
 def decay_rate(gauge):
-    return (2.5 * gauge + 7) / (0.8 * gauge) \
-        if gauge == 1 or gauge == 2 or gauge == 4 else -1
+    if gauge in [1, 2, 4]:
+        return (2.5 * gauge + 7) / (AURA_TAX * gauge)
+    return -1
 
 
 A1 = True
@@ -110,13 +111,13 @@ class Aura:
                 self.U -= 1 / (decay_rate(2) * FPSDisplay.trueFPS)
             if self.decay_U == 'C':
                 self.U -= 1 / (decay_rate(4) * FPSDisplay.trueFPS)
-            if self.decay_U == 'AB':
+            if self.decay_U == 'Ab':
                 self.U -= (1 / (decay_rate(1) * FPSDisplay.trueFPS)) + \
                           (1 / (decay_rate(2) * FPSDisplay.trueFPS))
-            if self.decay_U == 'BB':
+            if self.decay_U == 'Bb':
                 self.U -= (1 / (decay_rate(2) * FPSDisplay.trueFPS)) + \
                           (1 / (decay_rate(2) * FPSDisplay.trueFPS))
-            if self.decay_U == 'CB':
+            if self.decay_U == 'Cb':
                 self.U -= (1 / (decay_rate(4) * FPSDisplay.trueFPS)) + \
                           (1 / (decay_rate(2) * FPSDisplay.trueFPS))
         if self.U <= 0:
@@ -136,11 +137,11 @@ class Aura:
     def dendro_decay_while_burning(self):
         if self.element == DENDRO and burning:
             if self.decay_U == 'A':
-                self.decay_U = 'AB'
+                self.decay_U = 'Ab'
             if self.decay_U == 'B':
-                self.decay_U = 'BB'
+                self.decay_U = 'Bb'
             if self.decay_U == 'C':
-                self.decay_U = 'CB'
+                self.decay_U = 'Cb'
 
 
 def reaction(mousex, mousey):
@@ -195,6 +196,7 @@ def electro_trigger():
             reaction_text_list.insert(0, ReactionText('Superconduct'))
         if aura_list[i].element == DENDRO:
             reaction_text_list.insert(0, ReactionText('Intensified'))
+    for i in [-1, -2]:
         if aura_list[i].element == HYDRO:
             double_aura(aura_list[i], ELECTRO)
             reaction_text_list.insert(0, ReactionText('Electro-Charged'))
@@ -213,6 +215,8 @@ def dendro_trigger():
             reaction_text_list.insert(0, ReactionText('Burning'))
             frame_burning = 0
             burning = True
+            break
+    for i in [-1, -2]:
         if aura_list[i].element == HYDRO:
             reaction_text_list.insert(0, ReactionText('Bloom'))
         if aura_list[i].element == ELECTRO:
@@ -227,6 +231,7 @@ def hydro_trigger():
             reaction_text_list.insert(0, ReactionText('Vaporize'))
         if aura_list[i].element == DENDRO:
             reaction_text_list.insert(0, ReactionText('Bloom'))
+    for i in [-1, -2]:
         if aura_list[i].element == ELECTRO:
             double_aura(aura_list[i], HYDRO)
             reaction_text_list.insert(0, ReactionText('Electro-Charged'))
@@ -249,11 +254,13 @@ def pyro_trigger():
         if aura_list[i].element == ELECTRO:
             consume_gauge(REACTION_MODIFIER['normal'], i)
             reaction_text_list.insert(0, ReactionText('Overload'))
+    for i in [-1, -2]:
         if aura_list[i].element == DENDRO:
             double_aura(aura_list[i], PYRO)
             reaction_text_list.insert(0, ReactionText('Burning'))
             frame_burning = 0
             burning = True
+            break
 
 
 def consume_gauge(modifier, aura_slot):
@@ -275,11 +282,8 @@ def get_decay_rate():
 
 def double_aura(aura1, aura2):
     if aura1.element == HYDRO and aura2 == ELECTRO \
-            or aura1.element == ELECTRO and aura2 == HYDRO:
-        U, d = get_decay_rate()
-        if aura1.aura_count in [1, 2]:
-            aura_list.append(Aura(True, U, d, aura2, 3 - aura1.aura_count))
-    elif aura1.element == PYRO and aura2 == DENDRO \
+            or aura1.element == ELECTRO and aura2 == HYDRO \
+            or aura1.element == PYRO and aura2 == DENDRO \
             or aura1.element == DENDRO and aura2 == PYRO:
         U, d = get_decay_rate()
         if aura1.aura_count in [1, 2]:
@@ -307,7 +311,7 @@ def burning_tick():
             reaction_text_list.insert(0, ReactionText('Burning'))
             # reapply Pyro every tick
             for i in [-1, -2]:
-                if aura_list[-3 - i] == DENDRO \
+                if aura_list[-3 - i].element == DENDRO \
                         and aura_list[i].U <= 2 * AURA_TAX \
                         and aura_list[i].element == PYRO:
                     aura_list[i] = Aura(True, 2, 'B', PYRO, 3 + i)
@@ -360,11 +364,14 @@ def click(_mouse_x, _mouse_y):
                     for i in [-1, -2]:
                         if element == aura_list[i].element and aura_list[i].aura is True:
                             if A1 and aura_list[i].U < 0.8:
-                                aura_list[i] = Aura(True, 1, aura_list[i].decay_U, element, aura_list[i].aura_count)
+                                aura_list[i] = Aura(
+                                    True, 1, aura_list[i].decay_U, element, aura_list[i].aura_count)
                             elif B2 and aura_list[i].U < 2.6:
-                                aura_list[i] = Aura(True, 2, aura_list[i].decay_U, element, aura_list[i].aura_count)
+                                aura_list[i] = Aura(
+                                    True, 2, aura_list[i].decay_U, element, aura_list[i].aura_count)
                             elif C4 and aura_list[i].U < 3.2:
-                                aura_list[i] = Aura(True, 4, aura_list[i].decay_U, element, aura_list[i].aura_count)
+                                aura_list[i] = Aura(
+                                    True, 4, aura_list[i].decay_U, element, aura_list[i].aura_count)
                             no_reaction = True
                             break
                     # reaction
@@ -375,7 +382,7 @@ def click(_mouse_x, _mouse_y):
 def reaction_log():
     if len(reaction_text_list) > 0:
         for i in range(len(reaction_text_list)):
-            font = pygame.font.Font(path.FONT_JAJP, 25)
+            font = pygame.font.Font(path.FONT_JAJP, 22)
             font = font.render(
                 reaction_text_list[i].text, True, reaction_text_list[i].color)
             canvas.blit(font, (CNVW - LOGW,
