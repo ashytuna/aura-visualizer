@@ -128,7 +128,7 @@ class Aura:
                 (255, 255, 255))
             canvas.blit(img, (10, CNVH - (100 * self.aura_count) - 40))
 
-    def dendro_decay_while_burning(self):
+    def check_burning_status(self):
         if self.element == DENDRO and burning:
             self.burning = True
 
