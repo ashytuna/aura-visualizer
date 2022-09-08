@@ -445,7 +445,7 @@ while running:
     draw()
 
     for aura in aura_list:
-        aura.dendro_decay_while_burning()
+        aura.check_burning_status()
 
     EC_tick()
     burning_tick()
