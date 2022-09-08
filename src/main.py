@@ -314,7 +314,7 @@ def burning_tick():
 aura_list.append(Aura(False, 1, 'A', 7, 3))
 
 
-def click_unit():
+def click_unit(mouse_x, mouse_y):
     global A1, B2, C4
     x = CNVW - 300
     y = CNVH - 50
@@ -335,7 +335,7 @@ def click_unit():
 
 def click(_mouse_x, _mouse_y):
     global A1, B2, C4
-    click_unit()
+    click_unit(_mouse_x, _mouse_y)
     for element in range(len(element_imgs)):
         if ELMS * element < _mouse_x < ELMS * (element + 1):
             if CNVH - ELMS < _mouse_y < CNVH:
