@@ -96,6 +96,7 @@ class Aura:
         self.decay_U = decay_U
         self.element = element
         self.aura_count = aura_count
+        self.burning = False
 
     def aura_display(self):
         if self.aura:
@@ -107,19 +108,12 @@ class Aura:
         if self.aura:
             if self.decay_U == 'A':
                 self.U -= 1 / (decay_rate(1) * FPSDisplay.trueFPS)
-            if self.decay_U == 'B':
+            elif self.decay_U == 'B':
                 self.U -= 1 / (decay_rate(2) * FPSDisplay.trueFPS)
-            if self.decay_U == 'C':
+            elif self.decay_U == 'C':
                 self.U -= 1 / (decay_rate(4) * FPSDisplay.trueFPS)
-            if self.decay_U == 'Ab':
-                self.U -= (1 / (decay_rate(1) * FPSDisplay.trueFPS)) + \
-                          (1 / (decay_rate(2) * FPSDisplay.trueFPS))
-            if self.decay_U == 'Bb':
-                self.U -= (1 / (decay_rate(2) * FPSDisplay.trueFPS)) + \
-                          (1 / (decay_rate(2) * FPSDisplay.trueFPS))
-            if self.decay_U == 'Cb':
-                self.U -= (1 / (decay_rate(4) * FPSDisplay.trueFPS)) + \
-                          (1 / (decay_rate(2) * FPSDisplay.trueFPS))
+            if self.burning:
+                self.U -= 1 / (decay_rate(2) * FPSDisplay.trueFPS)
         if self.U <= 0:
             self.U = 0
             self.aura = False
@@ -136,12 +130,7 @@ class Aura:
 
     def dendro_decay_while_burning(self):
         if self.element == DENDRO and burning:
-            if self.decay_U == 'A':
-                self.decay_U = 'Ab'
-            if self.decay_U == 'B':
-                self.decay_U = 'Bb'
-            if self.decay_U == 'C':
-                self.decay_U = 'Cb'
+            self.burning = True
 
 
 def reaction(mousex, mousey):
