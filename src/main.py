@@ -355,7 +355,7 @@ def click(_mouse_x, _mouse_y):
                             if A1 and aura_list[i].U < 0.8:
                                 aura_list[i] = Aura(
                                     True, 1, aura_list[i].decay_U, element, aura_list[i].aura_count)
-                            elif B2 and aura_list[i].U < 2.6:
+                            elif B2 and aura_list[i].U < 1.6:
                                 aura_list[i] = Aura(
                                     True, 2, aura_list[i].decay_U, element, aura_list[i].aura_count)
                             elif C4 and aura_list[i].U < 3.2:
