@@ -276,12 +276,12 @@ def burning_tick():
         if frame_burning == FPS / 4 and len(aura_list) >= 2:
             frame_burning = 0
             record_to_log('Burning')
-            # reapply Pyro every tick
+            # reapply 1A Pyro every tick
             for i in [-1, -2]:
                 if aura_list[-3 - i].element == DENDRO \
-                        and aura_list[i].U <= AURA_TAX * 2 \
-                        and aura_list[i].element == PYRO:
-                    aura_list[i] = Aura(True, 2, 'B', PYRO, 3 + i)
+                        and aura_list[i].element == PYRO \
+                        and aura_list[i].U <= AURA_TAX * 1:
+                    aura_list[i] = Aura(True, 1, 'A', PYRO, 3 + i)
                     break
         if aura_list[-1].U <= 0 or aura_list[-2].U <= 0:
             burning = False
