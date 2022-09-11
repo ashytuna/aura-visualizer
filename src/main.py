@@ -1,4 +1,3 @@
-import math
 import os
 import path
 import pygame
@@ -6,41 +5,8 @@ import pygame
 
 ####### Constants #######
 
-CAPTION = 'Elemental Gauge Visualizer'
-CNVW, CNVH = 800, 600
-ELMS = 65
-AURS = 250
-LOGW = 250
-FPS = 60
-# TODO font sizes
-# TODO size of buttons
-# TODO change selected button appearance
-
-# Elements order depends on files order in ELEMENTS path
+# Elements order depends on files order in path.ELEMENTS
 ANEMO, CRYO, DENDRO, ELECTRO, GEO, HYDRO, PYRO = 0, 1, 2, 3, 4, 5, 6
-
-ELEMENT_COLOR = {
-    ANEMO: (163, 243, 202),
-    GEO: (250, 182, 50),
-    ELECTRO: (175, 142, 193),
-    DENDRO: (165, 200, 59),
-    HYDRO: (76, 194, 241),
-    PYRO: (239, 121, 56),
-    CRYO: (159, 214, 227)
-}
-
-REACTION_COLOR = {
-    'Vaporize': (254, 203, 99),
-    'Overload': (251, 136, 155),
-    'Superconduct': (196, 187, 245),
-    'Melt': (255, 202, 105),
-    'Crystalize': (215, 184, 130),
-    'Swirl': (163, 243, 202),
-    'Electro-Charged': (212, 162, 255),
-    'Burning': (233, 152, 8),
-    'Bloom': (76, 194, 241),
-    'Quicken': (175, 142, 193)
-}
 
 AURA_TAX = 0.8
 
@@ -56,18 +22,64 @@ REACTION_CONSUMER = {
     'Electro-Charged': 0.4
 }
 
+ELEMENT_COLOR = {
+    ANEMO: (115, 248, 206),
+    GEO: (255, 203, 99),
+    PYRO: (252, 156, 13),
+    HYDRO: (63, 197, 255),
+    ELECTRO: (220, 157, 247),
+    CRYO: (152, 255, 254),
+    DENDRO: (0, 158, 86)
+}
+
+REACTION_COLOR = {
+    'Swirl': (115, 248, 206),
+    'Crystalize': (255, 155, 0),
+    'Vaporize': (238, 202, 129),
+    'Overload': (248, 138, 155),
+    'Melt': (255, 202, 96),
+    'Electro-Charged': (220, 157, 247),
+    'Frozen': (156, 255, 255),
+    'Superconduct': (187, 180, 255),
+    'Burning': (252, 156, 13),
+    'Bloom': (0, 231, 75),
+    'Quicken': (0, 231, 86)
+}
+
+CAPTION = 'Aura Visualizer'
+CNVW = 800              # canvas width
+CNVH = 600              # canvas height
+ELMS = 65               # element icon size
+AURS = 250              # aura size
+LOGW = 250              # reaction log panel width
+FPS = 60
+FNTS_LOG = 22           # reaction log font size
+FNTS_BTN = 30           # buttons font size
+BTNC = (255, 255, 255)  # buttons color
+BGRC = (0, 0, 0)        # background color
+
+
+# TODO check repeat code
+# TODO reformat by PyCharm
+# TODO size of ruler, position
+# TODO resize everything to check if something missed
+# FIXME why cryo in loop (reaction_trigger(), check)
+# FIXME check burning Pyro aura decay rate probably around line 124
+# FIXME low FPS vs burning
+
 
 ####### Global variables #######
 
-canvas = 0
-[A1_button, B2_button, C4_button] = [False] * 3
-element_imgs = []
-reaction_text_list = []
-running = True
-fps = 0
 aura_list = []
 electro_charged, frame_electro_charged = False, 0
 burning, frame_burning = False, 0
+
+canvas = 0
+[A1_button, B2_button, C4_button] = [False] * 3
+element_img_list = []
+reaction_log_list = []
+running = True
+fps = 0
 
 
 ####### Classes #######
@@ -87,12 +99,13 @@ class ReactionText:
     def __init__(self, reaction):
         self.text = reaction
         self.color = REACTION_COLOR[reaction] if reaction in REACTION_COLOR \
-            else (255, 255, 255)
+            else BTNC
 
 
 class Aura:
+
     def __init__(self, aura, U, decay_U, element, aura_count):
-        if element == ANEMO or element == GEO:
+        if element in [ANEMO, GEO]:
             self.aura = False
         else:
             self.aura = aura
@@ -333,7 +346,7 @@ def update_burning_status():
         aura.check_burning_status()
 
 
-# Appearance functions
+# View functions
 
 def aura_display_size(aura_count):
     if aura_count == 1:
@@ -346,12 +359,13 @@ def aura_display_size(aura_count):
 
 
 def record_to_log(reaction_text):
-    reaction_text_list.insert(0, ReactionText(reaction_text))
+    reaction_log_list.insert(0, ReactionText(reaction_text))
 
 
 def display_aura(aura):
     if aura.aura:
-        img = pygame.transform.scale(element_imgs[aura.element], (AURS, AURS))
+        img = pygame.transform.scale(
+            element_img_list[aura.element], (AURS, AURS))
         canvas.blit(img, aura_display_size(aura.aura_count))
 
 
@@ -381,6 +395,16 @@ def reaction_trigger(mouse_x, mouse_y):
             hydro_trigger()
 
 
+def click(mouse_x, mouse_y):
+    click_button(mouse_x, mouse_y)
+    click_element(mouse_x, mouse_y)
+
+
+def play_bark_sound():
+    bark_sound = pygame.mixer.Sound(path.SOUND_BARK)
+    bark_sound.play()
+
+
 def click_button(mouse_x, mouse_y):
     global A1_button, B2_button, C4_button
     x = CNVW - 300
@@ -390,39 +414,42 @@ def click_button(mouse_x, mouse_y):
     if x < mouse_x < x + w:
         if y < mouse_y < y + h:
             A1_button, B2_button, C4_button = True, False, False
+            play_bark_sound()
     x = CNVW - 200
     if x < mouse_x < x + w:
         if y < mouse_y < y + h:
             A1_button, B2_button, C4_button = False, True, False
+            play_bark_sound()
     x = CNVW - 100
     if x < mouse_x < x + w:
         if y < mouse_y < y + h:
             A1_button, B2_button, C4_button = False, False, True
+            play_bark_sound()
 
 
-def click(mouse_x, mouse_y):
-    click_button(mouse_x, mouse_y)
-    for element in range(len(element_imgs)):
+def click_element(mouse_x, mouse_y):
+    for element in range(len(element_img_list)):
         if ELMS * element < mouse_x < ELMS * (element + 1) \
                 and CNVH - ELMS < mouse_y < CNVH:
+            play_bark_sound()
             if apply_aura(element) == False:
                 reaction_trigger(mouse_x, mouse_y)
 
 
 def reaction_log():
-    if len(reaction_text_list) > 0:
-        for i in range(len(reaction_text_list)):
-            font = pygame.font.Font(path.FONT_JAJP, 22)
+    if len(reaction_log_list) > 0:
+        for i in range(len(reaction_log_list)):
+            font = pygame.font.Font(path.FONT_JAJP, FNTS_LOG)
             font = font.render(
-                reaction_text_list[i].text, True, reaction_text_list[i].color)
+                reaction_log_list[i].text, True, reaction_log_list[i].color)
             canvas.blit(font, (CNVW - LOGW, (CNVH - LOGW) - 30 * i + 15))
 
 
 def draw():
     # element buttons
-    for i in range(len(element_imgs)):
+    for i in range(len(element_img_list)):
         canvas.blit(pygame.transform.scale(
-            element_imgs[i], (ELMS, ELMS)), (ELMS * i, CNVH - ELMS))
+            element_img_list[i], (ELMS, ELMS)), (ELMS * i, CNVH - ELMS))
     # Update aura
     update_aura_list()
     # Unit value tics
@@ -438,17 +465,17 @@ def draw():
             pygame.draw.rect(canvas, (0, 0, 0), pygame.Rect(
                 x * (CNVW / 40) - 2, CNVH - (100 * i), 1, 20))
     # Units buttons
-    font1A = pygame.font.Font(path.FONT_JAJP, 30)
+    font1A = pygame.font.Font(path.FONT_JAJP, FNTS_BTN)
     font1A.set_underline(A1_button)
-    img = font1A.render("1A", True, (255, 255, 255))
+    img = font1A.render("1A", True, BTNC)
     canvas.blit(img, (CNVW - 300, CNVH - 50))
-    font2B = pygame.font.Font(path.FONT_JAJP, 30)
+    font2B = pygame.font.Font(path.FONT_JAJP, FNTS_BTN)
     font2B.set_underline(B2_button)
-    img = font2B.render("2B", True, (255, 255, 255))
+    img = font2B.render("2B", True, BTNC)
     canvas.blit(img, (CNVW - 200, CNVH - 50))
-    font4C = pygame.font.Font(path.FONT_JAJP, 30)
+    font4C = pygame.font.Font(path.FONT_JAJP, FNTS_BTN)
     font4C.set_underline(C4_button)
-    img = font4C.render("4C", True, (255, 255, 255))
+    img = font4C.render("4C", True, BTNC)
     canvas.blit(img, (CNVW - 100, CNVH - 50))
     reaction_log()
 
@@ -459,10 +486,10 @@ def remove_inactive_auras():
         len(aura_list)) if aura_list[i].aura or aura_list[i].aura_count == 3]
 
 
-def trim_reaction_text_list():
-    global reaction_text_list
-    reaction_text_list = [reaction_text_list[i]
-                          for i in range(len(reaction_text_list)) if i <= 12]
+def trim_reaction_log_list():
+    global reaction_log_list
+    reaction_log_list = [reaction_log_list[i]
+                         for i in range(len(reaction_log_list)) if i <= 12]
 
 
 ####### Actual program #######
@@ -471,8 +498,9 @@ def trim_reaction_text_list():
 
 A1_button = True
 for fileName in os.listdir(path.ELEMENTS):
-    element_imgs.append(pygame.image.load(path.ELEMENTS + fileName))
+    element_img_list.append(pygame.image.load(path.ELEMENTS + fileName))
 pygame.init()
+pygame.mixer.init()
 canvas = pygame.display.set_mode((CNVW, CNVH))
 pygame.display.set_caption(CAPTION)
 favicon = pygame.image.load(path.FAVICON)
@@ -486,7 +514,7 @@ running = True
 while running:
     update_frames()
 
-    canvas.fill((0, 0, 0))
+    canvas.fill(BGRC)
     draw()
 
     update_burning_status()
@@ -502,7 +530,7 @@ while running:
             click(mouse_x, mouse_y)
 
     remove_inactive_auras()
-    trim_reaction_text_list()
+    trim_reaction_log_list()
 
     fps.render()
     pygame.display.update()

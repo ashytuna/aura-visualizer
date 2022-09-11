@@ -14,3 +14,5 @@ FAVICON = IMAGES + 'favicon.png'
 
 
 SOUNDS = ASSETS + 'sounds/'
+
+SOUND_BARK = SOUNDS + 'bark.wav'
