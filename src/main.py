@@ -79,20 +79,11 @@ canvas = 0
 element_img_list = []
 reaction_log_list = []
 running = True
+clock = 0
 fps = 0
 
 
 ####### Classes #######
-
-class FPSDisplay:
-    trueFPS = 0
-
-    def __init__(self):
-        self.clock = pygame.time.Clock()
-
-    def render(self):
-        FPSDisplay.trueFPS = self.clock.get_fps()
-
 
 class ReactionText:
 
@@ -117,13 +108,13 @@ class Aura:
     def decay(self):
         if self.aura:
             if self.decay_U == 'A':
-                self.U -= 1 / (decay_rate(1) * FPSDisplay.trueFPS)
+                self.U -= 1 / (decay_rate(1) * fps)
             elif self.decay_U == 'B':
-                self.U -= 1 / (decay_rate(2) * FPSDisplay.trueFPS)
+                self.U -= 1 / (decay_rate(2) * fps)
             elif self.decay_U == 'C':
-                self.U -= 1 / (decay_rate(4) * FPSDisplay.trueFPS)
+                self.U -= 1 / (decay_rate(4) * fps)
             if burning:
-                self.U -= 1 / (decay_rate(2) * FPSDisplay.trueFPS)
+                self.U -= 1 / (decay_rate(2) * fps)
         if self.U <= 0:
             self.U = 0
             self.aura = False
@@ -192,7 +183,7 @@ def electro_trigger():
             consume_gauge(REACTION_MODIFIER['normal'], i)
             record_to_log('Superconduct')
         if aura_list[i].element == DENDRO:
-            record_to_log('Intensified')
+            record_to_log('Quicken')
     for i in [-1, -2]:
         if aura_list[i].element == HYDRO:
             double_aura(aura_list[i], ELECTRO)
@@ -272,7 +263,7 @@ def dendro_trigger():
 def electro_charged_tick():
     global electro_charged, frame_electro_charged
     if electro_charged:
-        if frame_electro_charged == 5 * round(FPSDisplay.trueFPS / 5) and len(aura_list) >= 2:
+        if frame_electro_charged == 5 * round(fps / 5) and len(aura_list) >= 2:
             frame_electro_charged = 0
             aura_list[-1].U -= REACTION_CONSUMER['Electro-Charged']
             aura_list[-2].U -= REACTION_CONSUMER['Electro-Charged']
@@ -280,7 +271,7 @@ def electro_charged_tick():
         if aura_list[-1].U <= 0 or aura_list[-2].U <= 0:
             electro_charged = False
             frame_electro_charged = (
-                5 * round(FPSDisplay.trueFPS / 5)) + 1
+                5 * round(fps / 5)) + 1
 
 
 def burning_tick():
@@ -505,8 +496,8 @@ canvas = pygame.display.set_mode((CNVW, CNVH))
 pygame.display.set_caption(CAPTION)
 favicon = pygame.image.load(path.FAVICON)
 pygame.display.set_icon(favicon)
-fps = FPSDisplay()
 aura_list.append(Aura(False, 1, 'A', 7, 3))
+clock = pygame.time.Clock()
 
 # game loop
 
@@ -532,6 +523,6 @@ while running:
     remove_inactive_auras()
     trim_reaction_log_list()
 
-    fps.render()
+    fps = clock.get_fps()
     pygame.display.update()
-    fps.clock.tick(FPS)
+    clock.tick(FPS)
