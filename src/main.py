@@ -1,11 +1,11 @@
-# TODO size of ruler, position
+# TODO stuff size and position
 # TODO resize everything to check if something missed
 # FIXME accumulate auras while burning
 # FIXME why cryo in loop (reaction_trigger(), check)
 # FIXME low FPS vs burning
+# TODO bloom, quicken, frozen
 
 
-import math
 import os
 import path
 import pygame
@@ -65,6 +65,7 @@ FNTS_TXT = 22           # reaction log font size
 FNTS_BTN = 30           # buttons font size
 TXTC = (255, 255, 255)  # text color
 BGRC = (0, 0, 0)        # background color
+RLRC = (0, 0, 0)        # ruler tick marks color
 
 
 ####### Global variables #######
@@ -293,18 +294,12 @@ def apply_aura(element):
 
     # if there a same aura existed, then refresh it
     for i in [-1, -2]:
-        if element == aura_list[i].element and aura_list[i].aura:
-            if btn_1A and aura_list[i].U < 1 * AURA_TAX:
-                aura_list[i] = Aura(
-                    True, 1, aura_list[i].decay_U, element, aura_list[i].aura_count)
-            elif btn_2B and aura_list[i].U < 2 * AURA_TAX:
-                aura_list[i] = Aura(
-                    True, 2, aura_list[i].decay_U, element, aura_list[i].aura_count)
-            elif btn_4C and aura_list[i].U < 4 * AURA_TAX:
-                aura_list[i] = Aura(
-                    True, 4, aura_list[i].decay_U, element, aura_list[i].aura_count)
+        if element == aura_list[i].element \
+                and aura_list[i].aura \
+                and aura_list[i].U < AURA_TAX * get_decay_rate()['unit']:
+            aura_list[i] = Aura(True, get_decay_rate()['unit'],
+                                aura_list[i].decay_U, element, aura_list[i].aura_count)
             return True
-
     return False
 
 
@@ -347,7 +342,7 @@ def display_number_and_notation(aura):
     if aura.aura:
         font = pygame.font.Font(path.FONT_JAJP, FNTS_TXT)
         img = font.render(
-            str(math.ceil(aura.U * 100) / 100) + aura.decay_U, True, TXTC)
+            '{:.2f}'.format(aura.U) + aura.decay_U, True, TXTC)
         canvas.blit(img, (10, CNVH - (100 * aura.aura_count) - 40))
 
 
@@ -423,13 +418,13 @@ def draw_element_imgs():
 def draw_rulers():
     for i in [1, 2]:
         for x in range(5):
-            pygame.draw.rect(canvas, (0, 0, 0), pygame.Rect(
+            pygame.draw.rect(canvas, RLRC, pygame.Rect(
                 x * (CNVW / 4) - 2, CNVH - (100 * i), 2, 30))
             if x == 4:
-                pygame.draw.rect(canvas, (0, 0, 0), pygame.Rect(
+                pygame.draw.rect(canvas, RLRC, pygame.Rect(
                     x * (CNVW / 4) - 3, CNVH - (100 * i), 2, 30))
         for x in range(40):
-            pygame.draw.rect(canvas, (0, 0, 0), pygame.Rect(
+            pygame.draw.rect(canvas, RLRC, pygame.Rect(
                 x * (CNVW / 40) - 2, CNVH - (100 * i), 1, 20))
 
 
