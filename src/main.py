@@ -1,3 +1,11 @@
+# TODO size of ruler, position
+# TODO resize everything to check if something missed
+# FIXME accumulate auras while burning
+# FIXME why cryo in loop (reaction_trigger(), check)
+# FIXME low FPS vs burning
+
+
+import math
 import os
 import path
 import pygame
@@ -53,16 +61,10 @@ ELMS = 65               # element icon size
 AURS = 250              # aura size
 LOGW = 250              # reaction log panel width
 FPS = 60
-FNTS_LOG = 22           # reaction log font size
+FNTS_TXT = 22           # reaction log font size
 FNTS_BTN = 30           # buttons font size
-BTNC = (255, 255, 255)  # buttons color
+TXTC = (255, 255, 255)  # text color
 BGRC = (0, 0, 0)        # background color
-
-
-# TODO size of ruler, position
-# TODO resize everything to check if something missed
-# FIXME why cryo in loop (reaction_trigger(), check)
-# FIXME low FPS vs burning
 
 
 ####### Global variables #######
@@ -87,7 +89,7 @@ class ReactionText:
     def __init__(self, reaction):
         self.text = reaction
         self.color = REACTION_COLOR[reaction] if reaction in REACTION_COLOR \
-            else BTNC
+            else TXTC
 
 
 class Aura:
@@ -335,10 +337,27 @@ def display_aura(aura):
         canvas.blit(img, aura_display_size(aura.aura_count))
 
 
-def display_gauge(aura):
+def display_unit_bar(aura):
     if aura.aura:
         pygame.draw.rect(canvas, (ELEMENT_COLOR[aura.element]), pygame.Rect(
             0, CNVH - (100 * aura.aura_count), aura.U * (CNVW / 4), 30))
+
+
+def display_number_and_notation(aura):
+    if aura.aura:
+        font = pygame.font.Font(path.FONT_JAJP, FNTS_TXT)
+        img = font.render(
+            str(math.ceil(aura.U * 100) / 100) + aura.decay_U, True, TXTC)
+        canvas.blit(img, (10, CNVH - (100 * aura.aura_count) - 40))
+
+
+def update_aura_list():
+    for i in range(len(aura_list)):
+        if aura_list[i].aura:
+            display_aura(aura_list[i])
+            aura_list[i].decay()
+            display_unit_bar(aura_list[i])
+            display_number_and_notation(aura_list[i])
 
 
 def reaction_trigger(_mouse_x, _mouse_y):
@@ -401,14 +420,6 @@ def draw_element_imgs():
             element_img_list[i], (ELMS, ELMS)), (ELMS * i, CNVH - ELMS))
 
 
-def update_aura_list():
-    for i in range(len(aura_list)):
-        if aura_list[i].aura:
-            display_aura(aura_list[i])
-            aura_list[i].decay()
-            display_gauge(aura_list[i])
-
-
 def draw_rulers():
     for i in [1, 2]:
         for x in range(5):
@@ -425,22 +436,22 @@ def draw_rulers():
 def draw_buttons():
     font1A = pygame.font.Font(path.FONT_JAJP, FNTS_BTN)
     font1A.set_underline(btn_1A)
-    img = font1A.render("1A", True, BTNC)
+    img = font1A.render("1A", True, TXTC)
     canvas.blit(img, (CNVW - 300, CNVH - 50))
     font2B = pygame.font.Font(path.FONT_JAJP, FNTS_BTN)
     font2B.set_underline(btn_2B)
-    img = font2B.render("2B", True, BTNC)
+    img = font2B.render("2B", True, TXTC)
     canvas.blit(img, (CNVW - 200, CNVH - 50))
     font4C = pygame.font.Font(path.FONT_JAJP, FNTS_BTN)
     font4C.set_underline(btn_4C)
-    img = font4C.render("4C", True, BTNC)
+    img = font4C.render("4C", True, TXTC)
     canvas.blit(img, (CNVW - 100, CNVH - 50))
 
 
 def draw_reaction_log():
     if len(reaction_log_list) > 0:
         for i in range(len(reaction_log_list)):
-            font = pygame.font.Font(path.FONT_JAJP, FNTS_LOG)
+            font = pygame.font.Font(path.FONT_JAJP, FNTS_TXT)
             font = font.render(
                 reaction_log_list[i].text, True, reaction_log_list[i].color)
             canvas.blit(font, (CNVW - LOGW, (CNVH - LOGW) - 30 * i + 15))
