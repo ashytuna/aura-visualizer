@@ -59,12 +59,10 @@ BTNC = (255, 255, 255)  # buttons color
 BGRC = (0, 0, 0)        # background color
 
 
-# TODO check repeat code
-# TODO reformat by PyCharm
 # TODO size of ruler, position
 # TODO resize everything to check if something missed
+# FIXME burning makes pyro decay suck (37b524ca54da30018c7d5a4a61ac874e19a313cb)
 # FIXME why cryo in loop (reaction_trigger(), check)
-# FIXME check burning Pyro aura decay rate probably around line 124
 # FIXME low FPS vs burning
 
 
@@ -75,7 +73,7 @@ electro_charged, frame_electro_charged = False, 0
 burning, frame_burning = False, 0
 
 canvas = 0
-[A1_button, B2_button, C4_button] = [False] * 3
+btn_1A, btn_2B, btn_4C = [False] * 3
 element_img_list = []
 reaction_log_list = []
 running = True
@@ -133,22 +131,17 @@ def decay_rate(gauge):
         return (2.5 * gauge + 7) / (AURA_TAX * gauge)
 
 
-def get_decay_rate_notation():
-    if A1_button:
-        return 1, 'A'
-    elif B2_button:
-        return 2, 'B'
-    elif C4_button:
-        return 4, 'C'
+def get_decay_rate():
+    if btn_1A:
+        return {'unit': 1, 'notation': 'A'}
+    elif btn_2B:
+        return {'unit': 2, 'notation': 'B'}
+    elif btn_4C:
+        return {'unit': 4, 'notation': 'C'}
 
 
 def consume_gauge(modifier, aura_slot):
-    if A1_button:
-        aura_list[aura_slot].U -= 1 * modifier
-    elif B2_button:
-        aura_list[aura_slot].U -= 2 * modifier
-    elif C4_button:
-        aura_list[aura_slot].U -= 4 * modifier
+    aura_list[aura_slot].U -= get_decay_rate()['unit'] * modifier
 
 
 def double_aura(aura1, aura2):
@@ -156,7 +149,7 @@ def double_aura(aura1, aura2):
             or aura1.element == ELECTRO and aura2 == HYDRO \
             or aura1.element == PYRO and aura2 == DENDRO \
             or aura1.element == DENDRO and aura2 == PYRO:
-        U, d = get_decay_rate_notation()
+        U, d = get_decay_rate().values()
         if aura1.aura_count in [1, 2]:
             aura_list.append(Aura(True, U, d, aura2, 3 - aura1.aura_count))
 
@@ -297,33 +290,25 @@ def apply_aura(element):
 
     # if no aura, then apply an element
     if not aura_list[-1].aura:
-        U, d = get_decay_rate_notation()
+        U, d = get_decay_rate().values()
         aura_list.append(Aura(True, U, d, element, 1))
         return True
 
     # if there a same aura existed, then refresh it
     for i in [-1, -2]:
         if element == aura_list[i].element and aura_list[i].aura:
-            if A1_button and aura_list[i].U < 1 * AURA_TAX:
+            if btn_1A and aura_list[i].U < 1 * AURA_TAX:
                 aura_list[i] = Aura(
                     True, 1, aura_list[i].decay_U, element, aura_list[i].aura_count)
-            elif B2_button and aura_list[i].U < 2 * AURA_TAX:
+            elif btn_2B and aura_list[i].U < 2 * AURA_TAX:
                 aura_list[i] = Aura(
                     True, 2, aura_list[i].decay_U, element, aura_list[i].aura_count)
-            elif C4_button and aura_list[i].U < 4 * AURA_TAX:
+            elif btn_4C and aura_list[i].U < 4 * AURA_TAX:
                 aura_list[i] = Aura(
                     True, 4, aura_list[i].decay_U, element, aura_list[i].aura_count)
             return True
 
     return False
-
-
-def update_aura_list():
-    for i in range(len(aura_list)):
-        if aura_list[i].aura:
-            display_aura(aura_list[i])
-            aura_list[i].decay()
-            display_gauge(aura_list[i])
 
 
 def update_frames():
@@ -341,11 +326,11 @@ def update_burning_status():
 
 def aura_display_size(aura_count):
     if aura_count == 1:
-        if len(aura_list) == 2:  # 1 aura - middle
+        if len(aura_list) == 2:     # 1 aura - middle
             return (CNVW - LOGW - AURS) / 2, CNVH / 2.8 - AURS / 2 - 30
-        if len(aura_list) == 3:  # 2 auras, 1st - left
+        if len(aura_list) == 3:     # 2 auras, 1st - left
             return (CNVW - LOGW) / 2 - AURS, CNVH / 2.8 - AURS / 2 - 30
-    if aura_count == 2:  # 2 auras, 2nd - right
+    if aura_count == 2:             # 2 auras, 2nd - right
         return (CNVW - LOGW) / 2, CNVH / 2.8 - AURS / 2 - 30
 
 
@@ -366,86 +351,76 @@ def display_gauge(aura):
             0, CNVH - (100 * aura.aura_count), aura.U * (CNVW / 4), 30))
 
 
-def reaction_trigger(mouse_x, mouse_y):
-    if CNVH - ELMS < mouse_y < CNVH:
+def reaction_trigger(_mouse_x, _mouse_y):
+    if CNVH - ELMS < _mouse_y < CNVH:
         for i in range(2):
             slot = - i - 1
-            if ELMS * ANEMO < mouse_x < ELMS * (ANEMO + 1):
+            if ELMS * ANEMO < _mouse_x < ELMS * (ANEMO + 1):
                 anemo_trigger(slot)
-            if ELMS * GEO < mouse_x < ELMS * (GEO + 1):
+            if ELMS * GEO < _mouse_x < ELMS * (GEO + 1):
                 geo_trigger(slot)
-            if ELMS * CRYO < mouse_x < ELMS * (CRYO + 1):
+            if ELMS * CRYO < _mouse_x < ELMS * (CRYO + 1):
                 cryo_trigger(slot)
-        if ELMS * DENDRO < mouse_x < ELMS * (DENDRO + 1):
+        if ELMS * DENDRO < _mouse_x < ELMS * (DENDRO + 1):
             dendro_trigger()
-        if ELMS * PYRO < mouse_x < ELMS * (PYRO + 1):
+        if ELMS * PYRO < _mouse_x < ELMS * (PYRO + 1):
             pyro_trigger()
-        if ELMS * ELECTRO < mouse_x < ELMS * (ELECTRO + 1):
+        if ELMS * ELECTRO < _mouse_x < ELMS * (ELECTRO + 1):
             electro_trigger()
-        if ELMS * HYDRO < mouse_x < ELMS * (HYDRO + 1):
+        if ELMS * HYDRO < _mouse_x < ELMS * (HYDRO + 1):
             hydro_trigger()
 
 
-def click(mouse_x, mouse_y):
-    click_button(mouse_x, mouse_y)
-    click_element(mouse_x, mouse_y)
+def play_sound(sound_name):
+    if sound_name == 'bark':
+        pygame.mixer.Sound(path.SOUND_BARK).play()
 
 
-def play_bark_sound():
-    bark_sound = pygame.mixer.Sound(path.SOUND_BARK)
-    bark_sound.play()
-
-
-def click_button(mouse_x, mouse_y):
-    global A1_button, B2_button, C4_button
-    x = CNVW - 300
+def click_button(_mouse_x, _mouse_y):
+    global btn_1A, btn_2B, btn_4C
     y = CNVH - 50
     w = 45
     h = 40
-    if x < mouse_x < x + w:
-        if y < mouse_y < y + h:
-            A1_button, B2_button, C4_button = True, False, False
-            play_bark_sound()
-    x = CNVW - 200
-    if x < mouse_x < x + w:
-        if y < mouse_y < y + h:
-            A1_button, B2_button, C4_button = False, True, False
-            play_bark_sound()
-    x = CNVW - 100
-    if x < mouse_x < x + w:
-        if y < mouse_y < y + h:
-            A1_button, B2_button, C4_button = False, False, True
-            play_bark_sound()
+    buttons = [False] * 3
+    for i in range(3):
+        x = CNVW - 300 + 100 * i
+        if x < _mouse_x < x + w:
+            if y < _mouse_y < y + h:
+                buttons[i] = True
+                btn_1A, btn_2B, btn_4C = buttons
+                play_sound('bark')
 
 
-def click_element(mouse_x, mouse_y):
+def click_element(_mouse_x, _mouse_y):
     for element in range(len(element_img_list)):
-        if ELMS * element < mouse_x < ELMS * (element + 1) \
-                and CNVH - ELMS < mouse_y < CNVH:
-            play_bark_sound()
-            if apply_aura(element) == False:
-                reaction_trigger(mouse_x, mouse_y)
+        if ELMS * element < _mouse_x < ELMS * (element + 1) \
+                and CNVH - ELMS < _mouse_y < CNVH:
+            play_sound('bark')
+            if not apply_aura(element):
+                reaction_trigger(_mouse_x, _mouse_y)
 
 
-def reaction_log():
-    if len(reaction_log_list) > 0:
-        for i in range(len(reaction_log_list)):
-            font = pygame.font.Font(path.FONT_JAJP, FNTS_LOG)
-            font = font.render(
-                reaction_log_list[i].text, True, reaction_log_list[i].color)
-            canvas.blit(font, (CNVW - LOGW, (CNVH - LOGW) - 30 * i + 15))
+def click(_mouse_x, _mouse_y):
+    click_button(_mouse_x, _mouse_y)
+    click_element(_mouse_x, _mouse_y)
 
 
-def draw():
-    # element buttons
+def draw_element_imgs():
     for i in range(len(element_img_list)):
         canvas.blit(pygame.transform.scale(
             element_img_list[i], (ELMS, ELMS)), (ELMS * i, CNVH - ELMS))
-    # Update aura
-    update_aura_list()
-    # Unit value tics
-    for i in range(2):
-        i += 1
+
+
+def update_aura_list():
+    for i in range(len(aura_list)):
+        if aura_list[i].aura:
+            display_aura(aura_list[i])
+            aura_list[i].decay()
+            display_gauge(aura_list[i])
+
+
+def draw_rulers():
+    for i in [1, 2]:
         for x in range(5):
             pygame.draw.rect(canvas, (0, 0, 0), pygame.Rect(
                 x * (CNVW / 4) - 2, CNVH - (100 * i), 2, 30))
@@ -455,20 +430,38 @@ def draw():
         for x in range(40):
             pygame.draw.rect(canvas, (0, 0, 0), pygame.Rect(
                 x * (CNVW / 40) - 2, CNVH - (100 * i), 1, 20))
-    # Units buttons
+
+
+def draw_buttons():
     font1A = pygame.font.Font(path.FONT_JAJP, FNTS_BTN)
-    font1A.set_underline(A1_button)
+    font1A.set_underline(btn_1A)
     img = font1A.render("1A", True, BTNC)
     canvas.blit(img, (CNVW - 300, CNVH - 50))
     font2B = pygame.font.Font(path.FONT_JAJP, FNTS_BTN)
-    font2B.set_underline(B2_button)
+    font2B.set_underline(btn_2B)
     img = font2B.render("2B", True, BTNC)
     canvas.blit(img, (CNVW - 200, CNVH - 50))
     font4C = pygame.font.Font(path.FONT_JAJP, FNTS_BTN)
-    font4C.set_underline(C4_button)
+    font4C.set_underline(btn_4C)
     img = font4C.render("4C", True, BTNC)
     canvas.blit(img, (CNVW - 100, CNVH - 50))
-    reaction_log()
+
+
+def draw_reaction_log():
+    if len(reaction_log_list) > 0:
+        for i in range(len(reaction_log_list)):
+            font = pygame.font.Font(path.FONT_JAJP, FNTS_LOG)
+            font = font.render(
+                reaction_log_list[i].text, True, reaction_log_list[i].color)
+            canvas.blit(font, (CNVW - LOGW, (CNVH - LOGW) - 30 * i + 15))
+
+
+def draw():
+    draw_element_imgs()
+    update_aura_list()
+    draw_rulers()
+    draw_buttons()
+    draw_reaction_log()
 
 
 def remove_inactive_auras():
@@ -487,7 +480,7 @@ def trim_reaction_log_list():
 
 # initialize
 
-A1_button = True
+btn_1A = True
 for fileName in os.listdir(path.ELEMENTS):
     element_img_list.append(pygame.image.load(path.ELEMENTS + fileName))
 pygame.init()
