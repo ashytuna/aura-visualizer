@@ -61,7 +61,6 @@ BGRC = (0, 0, 0)        # background color
 
 # TODO size of ruler, position
 # TODO resize everything to check if something missed
-# FIXME burning makes pyro decay suck (37b524ca54da30018c7d5a4a61ac874e19a313cb)
 # FIXME why cryo in loop (reaction_trigger(), check)
 # FIXME low FPS vs burning
 
@@ -111,15 +110,11 @@ class Aura:
                 self.U -= 1 / (decay_rate(2) * fps)
             elif self.decay_U == 'C':
                 self.U -= 1 / (decay_rate(4) * fps)
-            if burning:
+            if self.element == DENDRO and burning:
                 self.U -= 1 / (decay_rate(2) * fps)
         if self.U <= 0:
             self.U = 0
             self.aura = False
-
-    def check_burning_status(self):
-        if self.element == DENDRO and burning:
-            self.burning = True
 
 
 ####### Functions #######
@@ -317,11 +312,6 @@ def update_frames():
     frame_burning += 1
 
 
-def update_burning_status():
-    for aura in aura_list:
-        aura.check_burning_status()
-
-
 # View functions
 
 def aura_display_size(aura_count):
@@ -500,8 +490,6 @@ while running:
 
     canvas.fill(BGRC)
     draw()
-
-    update_burning_status()
 
     electro_charged_tick()
     burning_tick()
