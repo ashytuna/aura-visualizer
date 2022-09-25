@@ -64,8 +64,8 @@ FPS = 60
 FNTS_TXT = 22           # reaction log font size
 FNTS_BTN = 30           # buttons font size
 TXTC = (255, 255, 255)  # text color
-BGRC = (0, 0, 0)        # background color
-RLRC = (0, 0, 0)        # ruler tick marks color
+BGRC = (37, 37, 37)        # background color
+RLRC = (37, 37, 37)        # ruler tick marks color
 
 
 ####### Global variables #######
